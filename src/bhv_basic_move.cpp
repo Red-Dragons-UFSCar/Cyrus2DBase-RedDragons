@@ -3,6 +3,12 @@
 /*
  *Copyright:
 
+ Cyrus2D
+ Modified by Omid Amini, Nader Zare
+ 
+ Gliders2d
+ Modified by Mikhail Prokopenko, Peter Wang
+
  Copyright (C) Hidehisa AKIYAMA
 
  This code is free software; you can redistribute it and/or modify
@@ -75,10 +81,32 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     const int mate_min = wm.interceptTable()->teammateReachCycle();
     const int opp_min = wm.interceptTable()->opponentReachCycle();
 
+    // G2d: to retrieve opp team name 
+    // C2D: Helios 18 Tune removed -> replace with BNN
+    // bool helios2018 = false;
+    // if (wm.opponentTeamName().find("HELIOS2018") != std::string::npos)
+	// helios2018 = true;
+
+    // G2d: role
+    int role = Strategy::i().roleNumber( wm.self().unum() );
+
+    // G2d: pressing
+    int pressing = 13;
+
+    if ( role >= 6 && role <= 8 && wm.ball().pos().x > -30.0 && wm.self().pos().x < 10.0 )
+        pressing = 7;
+
+    if (fabs(wm.ball().pos().y) > 22.0 && wm.ball().pos().x < 0.0 && wm.ball().pos().x > -36.5 && (role == 4 || role == 5) ) 
+        pressing = 23;
+
+    // C2D: Helios 18 Tune removed -> replace with BNN
+    // if (helios2018) 
+	// pressing = 4;
+
     if ( ! wm.kickableTeammate()
          && ( self_min <= 3
               || ( self_min <= mate_min
-                   && self_min < opp_min + 3 )
+                   && self_min < opp_min + pressing ) // pressing
               )
          )
     {
