@@ -3,6 +3,12 @@
 /*
  *Copyright:
 
+ Cyrus2D
+ Modified by Omid Amini, Nader Zare
+ 
+ Gliders2d
+ Modified by Mikhail Prokopenko, Peter Wang
+
  Copyright (C) Hiroki SHIMORA
 
  This code is free software; you can redistribute it and/or modify
@@ -65,9 +71,9 @@ public:
       \brief evaluation function
       \return evaluation value of world model
      */
-    virtual
-    double operator() ( const PredictState & state,
-                        const std::vector< ActionStatePair > & path ) const = 0;
+      virtual double operator()(const PredictState &state,
+                                const std::vector<ActionStatePair> &path,
+                                const rcsc::WorldModel &wm) const = 0;
 };
 
 #endif
