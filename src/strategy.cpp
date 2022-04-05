@@ -8,6 +8,12 @@
 /*
  *Copyright:
 
+ Cyrus2D
+ Modified by Omid Amini, Nader Zare
+ 
+ Gliders2d
+ Modified by Mikhail Prokopenko, Peter Wang
+
  Copyright (C) Hidehisa AKIYAMA
 
  This code is free software; you can redistribute it and/or modify
@@ -1082,6 +1088,9 @@ Strategy::get_normal_dash_power( const WorldModel & wm )
 {
     static bool s_recover_mode = false;
 
+    // G2d: role
+    int role = Strategy::i().roleNumber(wm.self().unum());
+
     if ( wm.self().staminaModel().capacityIsEmpty() )
     {
         return std::min( ServerParam::i().maxDashPower(),
@@ -1128,6 +1137,23 @@ Strategy::get_normal_dash_power( const WorldModel & wm )
         dlog.addText( Logger::TEAM,
                       __FILE__": (get_normal_dash_power) recovering" );
     }
+
+    // G2d: run to offside line
+    else if (wm.ball().pos().x > 0.0 && wm.self().pos().x < wm.offsideLineX() && fabs(wm.ball().pos().x - wm.self().pos().x) < 25.0)
+        dash_power = ServerParam::i().maxDashPower();
+
+    // G2d: defenders
+    else if (wm.ball().pos().x < 10.0 && (role == 4 || role == 5 || role == 2 || role == 3))
+        dash_power = ServerParam::i().maxDashPower();
+
+    // G2d: midfielders
+    else if (wm.ball().pos().x < -10.0 && (role == 6 || role == 7 || role == 8))
+        dash_power = ServerParam::i().maxDashPower();
+
+    // G2d: run in opp penalty area
+    else if (wm.ball().pos().x > 36.0 && wm.self().pos().x > 36.0 && mate_min < opp_min - 4)
+        dash_power = ServerParam::i().maxDashPower();
+
     // exist kickable teammate
     else if ( wm.kickableTeammate()
               && wm.ball().distFromSelf() < 20.0 )
