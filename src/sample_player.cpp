@@ -90,6 +90,8 @@ using namespace rcsc;
 /*!
 
  */
+int SamplePlayer::player_port = 0;
+
 SamplePlayer::SamplePlayer()
     : PlayerAgent(),
       M_communication()
@@ -218,6 +220,7 @@ SamplePlayer::initImpl( CmdLineParser & cmd_parser )
 void
 SamplePlayer::actionImpl()
 {
+    SamplePlayer::player_port = this->config().port();
     if ( this->audioSensor().trainerMessageTime() == world().time() )
     {
         std::cerr << world().ourTeamName() << ' ' << world().self().unum()

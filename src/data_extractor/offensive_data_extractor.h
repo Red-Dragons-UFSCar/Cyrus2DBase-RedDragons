@@ -134,8 +134,6 @@ private:
 
     double convertor_counts(double count);
 
-    void extract_kicker(DEState &state);
-
     void extract_drible_angles(DEState &state);
 
     std::vector<DEPlayer *> sort_players(DEState &state);
@@ -155,21 +153,18 @@ public:
     double dist_self_to_opp_proj;
     double dist_opp_proj;
     double open_angle;
-    double opp_body_diff;
 
     ODEOpenAngle(){};
     ODEOpenAngle(
         double _dist_self_to_opp,
         double _dist_self_to_opp_proj,
         double _dist_opp_proj,
-        double _open_angle,
-        double _opp_body_diff
+        double _open_angle
     ) {
         dist_self_to_opp = _dist_self_to_opp;
         dist_self_to_opp_proj = _dist_self_to_opp_proj;
         dist_opp_proj = _dist_opp_proj;
         open_angle = _open_angle;
-        opp_body_diff = _opp_body_diff;
     };
 };
 

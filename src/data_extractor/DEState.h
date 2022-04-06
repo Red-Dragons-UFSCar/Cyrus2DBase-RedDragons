@@ -61,7 +61,6 @@ public:
     const AbstractPlayerObject * M_player;
     bool M_body_valid;
     DEPlayer(const AbstractPlayerObject * p, DEBall & ball):
-            M_player_type(p->playerTypePtr()),
             M_player(p)
         {
         M_pos = p->pos();
