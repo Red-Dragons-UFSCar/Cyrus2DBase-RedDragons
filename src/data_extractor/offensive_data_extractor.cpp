@@ -177,10 +177,9 @@ std::string OffensiveDataExtractor::get_header() {
     return header;
 }
 
-void OffensiveDataExtractor::update(const PlayerAgent *agent, const CooperativeAction &action,bool update_shoot) {
+void OffensiveDataExtractor::generate_save_data(const WorldModel & wm, const CooperativeAction &action,bool update_shoot) {
     if(!OffensiveDataExtractor::active)
         return;
-    const WorldModel & wm = agent->world();
     if (last_update_cycle == wm.time().cycle())
         return;
     if (!wm.self().isKickable())

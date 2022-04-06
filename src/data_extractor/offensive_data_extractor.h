@@ -58,9 +58,9 @@ public:
 
     ~OffensiveDataExtractor();
     Option option;
-    void update(const rcsc::PlayerAgent *agent,
-                const CooperativeAction &action,
-                bool update_shoot=false);
+    void generate_save_data(const WorldModel & wm,
+                            const CooperativeAction &action,
+                            bool update_shoot=false);
     std::string get_header();
 
     //accessors

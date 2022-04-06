@@ -33,7 +33,7 @@
 #endif
 
 #include "action_chain_graph.h"
-
+#include "../data_extractor/offensive_data_extractor.h"
 #include "hold_ball.h"
 
 #include <rcsc/player/player_agent.h>
@@ -173,6 +173,9 @@ ActionChainGraph::calculateResult( const WorldModel & wm )
 
         M_result.push_back( ActionStatePair( action, result_state ) );
     }
+
+    ActionStatePair *first_layer = M_result.begin().base();
+    OffensiveDataExtractor::i().generate_save_data(wm, first_layer->action());
 
     write_chain_log( ">>>>> best chain: ",
                      wm,
