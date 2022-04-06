@@ -71,14 +71,22 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     dlog.addText( Logger::TEAM,
                   __FILE__": Bhv_BasicMove" );
 
+    const WorldModel & wm = agent->world();
+
     //-----------------------------------------------
     // tackle
-    if ( Bhv_BasicTackle( 0.8, 80.0 ).execute( agent ) )
+    // G2d: tackle probability
+    double doTackleProb = 0.8;
+    if (wm.ball().pos().x < 0.0)
+    {
+      doTackleProb = 0.5;
+    }
+
+    if ( Bhv_BasicTackle( doTackleProb, 80.0 ).execute( agent ) )
     {
         return true;
     }
 
-    const WorldModel & wm = agent->world();
     /*--------------------------------------------------------*/
     // chase ball
     const int self_min = wm.interceptTable()->selfReachCycle();
