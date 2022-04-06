@@ -4,6 +4,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 PLAYERSOURCES = \
 	bhv_basic_move.cpp \
+	bhv_basic_block.cpp \
 	bhv_basic_offensive_kick.cpp \
 	bhv_basic_tackle.cpp \
 	bhv_custom_before_kick_off.cpp \
@@ -48,6 +49,7 @@ PLAYERSOURCES = \
 
 PLAYERHEADERS = \
 	bhv_basic_move.h \
+	bhv_basic_block.h \
 	bhv_basic_offensive_kick.h \
 	bhv_basic_tackle.h \
 	bhv_custom_before_kick_off.h \

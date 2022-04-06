@@ -33,6 +33,7 @@ add_executable(sample_player
   chain_action/strict_check_pass_generator.cpp
   chain_action/tackle_generator.cpp
   bhv_basic_move.cpp
+  bhv_basic_block.cpp
   bhv_basic_offensive_kick.cpp
   bhv_basic_tackle.cpp
   bhv_custom_before_kick_off.cpp
