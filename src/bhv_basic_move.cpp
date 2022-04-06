@@ -34,15 +34,18 @@
 #include <config.h>
 #endif
 
+
+
 #include "bhv_basic_move.h"
-
 #include "strategy.h"
-
 #include "bhv_basic_tackle.h"
+#include "neck_offensive_intercept_neck.h"
+
 
 #include <rcsc/action/basic_actions.h>
 #include <rcsc/action/body_go_to_point.h>
 #include <rcsc/action/body_intercept.h>
+#include <rcsc/action/neck_scan_field.h>
 #include <rcsc/action/neck_turn_to_ball_or_scan.h>
 #include <rcsc/action/neck_turn_to_low_conf_teammate.h>
 
@@ -54,6 +57,7 @@
 #include <rcsc/common/server_param.h>
 
 #include "neck_offensive_intercept_neck.h"
+#include <rcsc/player/soccer_intention.h>
 
 using namespace rcsc;
 
@@ -80,6 +84,8 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     const int self_min = wm.interceptTable()->selfReachCycle();
     const int mate_min = wm.interceptTable()->teammateReachCycle();
     const int opp_min = wm.interceptTable()->opponentReachCycle();
+
+    const Vector2D target_point = Strategy::i().getPosition( wm.self().unum() );
 
     // G2d: to retrieve opp team name 
     // C2D: Helios 18 Tune removed -> replace with BNN
@@ -118,7 +124,47 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
         return true;
     }
 
-    const Vector2D target_point = Strategy::i().getPosition( wm.self().unum() );
+// G2D : offside trap
+    Vector2D me = wm.self().pos();
+    Vector2D homePos = target_point;
+    double first = 0.0, second = 0.0;
+    const auto t3_end = wm.teammatesFromSelf().end();
+        for ( auto it = wm.teammatesFromSelf().begin();
+              it != t3_end;
+              ++it )
+        {
+            double x = (*it)->pos().x;
+            if ( x < second )
+            {
+                second = x;
+                if ( second < first )
+                {
+                    std::swap( first, second );
+                }
+            }
+        }
+
+   double buf1 = 3.5;
+   double buf2 = 4.5;
+
+   if( me.x < -37.0 && opp_min < mate_min && 
+       (homePos.x > -37.5 || wm.ball().inertiaPoint(opp_min).x > -36.0 ) &&
+         second + buf1 > me.x && wm.ball().pos().x > me.x + buf2)    
+   {
+        Body_GoToPoint( rcsc::Vector2D( me.x + 15.0, me.y ),
+                        0.5, ServerParam::i().maxDashPower(), // maximum dash power
+                        ServerParam::i().maxDashPower(),     // preferred dash speed
+                        2,                                  // preferred reach cycle
+                        true,                              // save recovery
+                        5.0 ).execute( agent );
+
+        if (wm.kickableOpponent() && wm.ball().distFromSelf() < 12.0) // C2D
+            agent->setNeckAction(new Neck_TurnToBall());
+        else
+            agent->setNeckAction(new Neck_TurnToBallOrScan(4)); // C2D
+        return true;
+   }
+
     const double dash_power = Strategy::get_normal_dash_power( wm );
 
     double dist_thr = wm.ball().distFromSelf() * 0.1;
