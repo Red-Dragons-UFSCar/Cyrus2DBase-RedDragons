@@ -54,6 +54,7 @@
 #include <rcsc/common/server_param.h>
 
 #include "neck_offensive_intercept_neck.h"
+#include "bhv_basic_block.h"
 
 using namespace rcsc;
 
@@ -106,7 +107,7 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     if ( ! wm.kickableTeammate()
          && ( self_min <= 3
               || ( self_min <= mate_min
-                   && self_min < opp_min + pressing ) // pressing
+                   && self_min < opp_min ) // pressing
               )
          )
     {
@@ -116,6 +117,14 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
         agent->setNeckAction( new Neck_OffensiveInterceptNeck() );
 
         return true;
+    }
+
+    if (std::min(self_min, mate_min) < opp_min){
+
+    }else{
+        if (Bhv_BasicBlock().execute(agent)){
+            return true;
+        }
     }
 
     const Vector2D target_point = Strategy::i().getPosition( wm.self().unum() );
