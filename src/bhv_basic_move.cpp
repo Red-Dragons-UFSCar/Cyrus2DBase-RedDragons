@@ -100,6 +100,8 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     if (fabs(wm.ball().pos().y) > 22.0 && wm.ball().pos().x < 0.0 && wm.ball().pos().x > -36.5 && (role == 4 || role == 5) ) 
         pressing = 23;
 
+    if (wm.ball().pos().x > -30 && role <= 5)
+        pressing = 2;
     // C2D: Helios 18 Tune removed -> replace with BNN
     // if (helios2018) 
 	// pressing = 4;
@@ -107,7 +109,7 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     if ( ! wm.kickableTeammate()
          && ( self_min <= 3
               || ( self_min <= mate_min
-                   && self_min < opp_min ) // pressing
+                   && self_min < opp_min + pressing ) // pressing
               )
          )
     {
