@@ -44,7 +44,9 @@ PLAYERSOURCES = \
 	sample_freeform_message_parser.cpp \
 	sample_player.cpp \
 	strategy.cpp \
-	main_player.cpp
+	main_player.cpp \
+	data_extractor/DEState.cpp \
+    data_extractor/offensive_data_extractor.cpp
 
 PLAYERHEADERS = \
 	bhv_basic_move.h \
@@ -88,7 +90,9 @@ PLAYERHEADERS = \
 	sample_field_evaluator.h \
 	sample_freeform_message_parser.h \
 	sample_player.h \
-	strategy.h
+	strategy.h \
+	data_extractor/DEState.h \
+	data_extractor/offensive_data_extractor.h
 
 CHAINACTIONSOURCES = \
 	chain_action/actgen_action_chain_length_filter.h \

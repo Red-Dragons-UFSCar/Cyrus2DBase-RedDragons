@@ -74,6 +74,8 @@ add_executable(sample_player
   sample_player.cpp
   strategy.cpp
   main_player.cpp
+  data_extractor/DEState.cpp
+  data_extractor/offensive_data_extractor.cpp
   )
 
 target_include_directories(sample_player
