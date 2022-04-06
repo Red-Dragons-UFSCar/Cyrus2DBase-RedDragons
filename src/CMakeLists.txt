@@ -76,6 +76,7 @@ add_executable(sample_player
   main_player.cpp
   data_extractor/DEState.cpp
   data_extractor/offensive_data_extractor.cpp
+  bhv_unmark.cpp
   )
 
 target_include_directories(sample_player

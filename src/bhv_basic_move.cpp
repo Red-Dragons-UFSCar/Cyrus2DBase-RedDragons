@@ -54,6 +54,7 @@
 #include <rcsc/common/server_param.h>
 
 #include "neck_offensive_intercept_neck.h"
+#include "bhv_unmark.h"
 
 using namespace rcsc;
 
@@ -118,6 +119,10 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
         return true;
     }
 
+    if (std::min(self_min, mate_min) < opp_min){
+        if (Bhv_Unmark().execute(agent))
+            return true;
+    }
     const Vector2D target_point = Strategy::i().getPosition( wm.self().unum() );
     const double dash_power = Strategy::get_normal_dash_power( wm );
 
