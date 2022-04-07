@@ -5,7 +5,9 @@
  *      Author: 007
  */
 #ifdef HAVE_CONFIG_H
+
 #include <config.h>
+
 #endif
 
 #include "strategy.h"
@@ -31,35 +33,28 @@ using namespace rcsc;
 
 static bool debug = false;
 int Bhv_Unmark::last_cycle = 0;
-Vector2D Bhv_Unmark::target_pos = Vector2D(0, 0);
+Vector2D Bhv_Unmark::last_target_pos = Vector2D(0, 0);
 
-bool Bhv_Unmark::execute(PlayerAgent * agent){
-    const WorldModel & wm = agent->world();
-
-    vector<Bhv_Unmark::UnmarkPosition> unmark_positions;
-
-    if (!canIpos(agent)) {
+bool Bhv_Unmark::execute(PlayerAgent *agent) {
+    const WorldModel &wm = agent->world();
+    if (!can_unmarking(wm))
         return false;
-    }
 
-    if(last_cycle > 0&&target_pos.x<wm.offsideLineX()){
+    if (last_cycle > 0 && last_target_pos.x < wm.offsideLineX()) {
         last_cycle--;
-        Arm_PointToPoint(target_pos).execute(agent);
-
-        return Body_GoToPoint(target_pos, 0.2, 100).execute(agent);
-
+        dlog.addText(Logger::POSITIONING, "run last unmarking to (%.1f, %.1f)", last_target_pos.x, last_target_pos.y);
+        return Body_GoToPoint(last_target_pos, 0.2, 100).execute(agent);
     }
 
     int passer = passer_finder(agent);
-
+    dlog.addText(Logger::POSITIONING, "Should unmarking for %d", passer);
     if (passer == 0)
         return false;
-
+    vector<Bhv_Unmark::UnmarkPosition> unmark_positions;
     simulate_dash(agent, passer, unmark_positions);
 
-    if (unmark_positions.size() == 0) {
+    if (unmark_positions.empty())
         return false;
-    }
 
     double max_eval = 0;
     int best = -1; //-1=not 0=last other=other
@@ -73,89 +68,83 @@ bool Bhv_Unmark::execute(PlayerAgent * agent){
     if (best == -1)
         return false;
     if (run(agent, unmark_positions[best])) {
+        agent->debugClient().addMessage("Unmarking to (%.1f, %.1f)", unmark_positions[best].target.x,
+                                        unmark_positions[best].target.y);
         return true;
     }
     return false;
 }
 
-bool Bhv_Unmark::canIpos(PlayerAgent * agent){
-
-    const WorldModel & wm = agent->world();
-
+bool Bhv_Unmark::can_unmarking(const WorldModel &wm) {
     int mate_min = wm.interceptTable()->teammateReachCycle();
     int opp_min = wm.interceptTable()->opponentReachCycle();
     int unum = wm.self().unum();
-    int stamina = wm.self().stamina();
-    double dist2target = Strategy::instance().getPosition(unum).dist(
-            wm.self().pos());
-
-    int max_stamina = 3000;
-
-    if (wm.self().unum() > 8) {
+    double stamina = wm.self().stamina();
+    double dist2target = Strategy::instance().getPosition(unum).dist(wm.self().pos());
+    int min_stamina_limit = 3500;
+    if (wm.self().unum() >= 9) {
         if (wm.ball().pos().x > 30)
-            max_stamina = 2700;
+            min_stamina_limit = 2700;
         else if (wm.ball().pos().x > 10)
-            max_stamina = 3000;
+            min_stamina_limit = 3500;
         else if (wm.ball().pos().x > -30)
-            max_stamina = 3500;
+            min_stamina_limit = 5000;
         else if (wm.ball().pos().x > -55)
-            max_stamina = 4000;
-    } else if (wm.self().unum() < 7) {
+            min_stamina_limit = 6000;
+    } else if (wm.self().unum() >= 6) {
         if (wm.ball().pos().x > 30)
-            max_stamina = 5000;
+            min_stamina_limit = 3000;
         else if (wm.ball().pos().x > 10)
-            max_stamina = 4000;
+            min_stamina_limit = 4000;
         else if (wm.ball().pos().x > -30)
-            max_stamina = 3300;
+            min_stamina_limit = 6000;
         else if (wm.ball().pos().x > -55)
-            max_stamina = 2500;
+            min_stamina_limit = 7000;
     } else {
         if (wm.ball().pos().x > 30)
-            max_stamina = 3000;
+            min_stamina_limit = 6000;
         else if (wm.ball().pos().x > 10)
-            max_stamina = 3500;
+            min_stamina_limit = 4000;
         else if (wm.ball().pos().x > -30)
-            max_stamina = 3300;
+            min_stamina_limit = 3500;
         else if (wm.ball().pos().x > -55)
-            max_stamina = 2000;
+            min_stamina_limit = 2500;
     }
 
-    if (opp_min < mate_min || stamina < max_stamina || dist2target > 10) {
-        if (debug)
-            dlog.addText(Logger::POSITIONING,
-                         "can not for opp cycle or stamina or dist");
+    if (opp_min < mate_min || stamina < min_stamina_limit || dist2target > 10) {
+        dlog.addText(Logger::POSITIONING,
+                     "can not for opp cycle or stamina or dist");
         return false;
     }
 
     if (opp_min == mate_min)
         if (unum < 6) {
-            if (debug)
-                dlog.addText(Logger::POSITIONING,
-                             "can not for opp cycle or stamina or dist def");
+            dlog.addText(Logger::POSITIONING,
+                         "can not for opp cycle or stamina or dist def");
             return false;
         }
 
     if (wm.self().isFrozen()) {
-        if (debug)
-            dlog.addText(Logger::POSITIONING, "can not for frozen");
+        dlog.addText(Logger::POSITIONING, "can not for frozen");
         return false;
     }
-
+    if (wm.ball().inertiaPoint(mate_min).dist(wm.self().pos()) > 35)
+        return false;
     return true;
 }
 
-int Bhv_Unmark::passer_finder(rcsc::PlayerAgent *agent){
-    const WorldModel & wm = agent->world();
+int Bhv_Unmark::passer_finder(rcsc::PlayerAgent *agent) {
+    const WorldModel &wm = agent->world();
     auto tm = wm.interceptTable()->fastestTeammate();
     if (tm != nullptr && tm->unum() > 0)
         return tm->unum();
     return 0;
 }
 
-void Bhv_Unmark::simulate_dash(rcsc::PlayerAgent * agent, int tm,
-                                 vector<Bhv_Unmark::UnmarkPosition> & unmark_positions){
-    const WorldModel & wm = agent->world();
-    const AbstractPlayerObject * passer = wm.ourPlayer(tm);
+void Bhv_Unmark::simulate_dash(rcsc::PlayerAgent *agent, int tm,
+                               vector<Bhv_Unmark::UnmarkPosition> &unmark_positions) {
+    const WorldModel &wm = agent->world();
+    const AbstractPlayerObject *passer = wm.ourPlayer(tm);
     int mate_min = wm.interceptTable()->teammateReachCycle();
 
     Vector2D ball_pos = wm.ball().inertiaPoint(mate_min);
@@ -165,26 +154,24 @@ void Bhv_Unmark::simulate_dash(rcsc::PlayerAgent * agent, int tm,
     Vector2D self_vel = wm.self().vel();
     AngleDeg self_body = wm.self().body().degree();
 
-    const PlayerType * self_type = &(wm.self().playerType());
+    const PlayerType *self_type = &(wm.self().playerType());
     double self_max_speed = self_type->realSpeedMax();
     double self_speed = self_vel.r();
     double offside_lineX = wm.offsideLineX();
-
-    if (ball_pos.dist(self_pos) > 35)
-        return;
 
     int max_dash = 10;
     int angle_divs = 10;
     double angle_step = 360.0 / angle_divs;
 
+    int position_id = 0;
     for (int i = 0; i < angle_divs; i++) {
 
         AngleDeg angle = i * angle_step + self_body;
 
         int n_turn = FieldAnalyzer::predict_player_turn_cycle(self_type, self_body, self_speed,
-                                               5, angle, 0, false);
+                                                              5, angle, 0, false);
         int n_dash = 0;
-        Vector2D new_self_pos = self_pos;
+        Vector2D target = self_pos;
 
         double speed = (n_turn == 0 ? self_speed : 0);
         double accel = ServerParam::i().maxDashPower()
@@ -198,52 +185,65 @@ void Bhv_Unmark::simulate_dash(rcsc::PlayerAgent * agent, int tm,
             }
 
             speed += accel;
-            new_self_pos += Vector2D::polar2vector(speed, angle);
+            target += Vector2D::polar2vector(speed, angle);
 
             speed *= self_type->playerDecay();
 
-            if (new_self_pos.x > offside_lineX) {
+            if (target.dist(self_pos) < 1)
+                continue;
+
+            if (target.x > offside_lineX) {
+                dlog.addCircle(Logger::POSITIONING, target, 0.5, 255, 0, 0);
                 continue;
             }
 
-            double home_max_dist = 10;
-            if (wm.self().unum() == 11
-                || (wm.self().unum() >= 6 && wm.ball().pos().x > 0))
-                home_max_dist = 7;
+            double home_max_dist = 7;
 
-            if (new_self_pos.dist(home_pos) > home_max_dist)
+            if (target.dist(home_pos) > home_max_dist) {
+                dlog.addCircle(Logger::POSITIONING, target, 0.5, 255, 0, 0);
                 continue;
+            }
 
             double min_tm_dist =
-                    ServerParam::i().theirPenaltyArea().contains(new_self_pos) ?
+                    ServerParam::i().theirPenaltyArea().contains(target) ?
                     5 : 8;
-            if (nearest_tm_dist_to(wm, new_self_pos) < min_tm_dist)
+            if (nearest_tm_dist_to(wm, target) < min_tm_dist) {
+                dlog.addCircle(Logger::POSITIONING, target, 0.5, 255, 0, 0);
                 continue;
-            if (new_self_pos.absX() > 52 || new_self_pos.absY() > 31.5)
+            }
+            if (target.absX() > 52 || target.absY() > 31.5) {
+                dlog.addCircle(Logger::POSITIONING, target, 0.5, 255, 0, 0);
                 continue;
-            int opp_danger_cycle = wm.interceptTable()->opponentReachCycle();
-            if ((opp_danger_cycle - mate_min) < n_step - 2)
-                continue;
-            vector<passpos> passes;
-            lead_pass_simulator(wm, passer_pos, new_self_pos, n_step, passes);
+            }
+
+            vector<UnmakingPass> passes;
+            lead_pass_simulator(wm, passer_pos, target, n_step, passes);
 
             if (!passes.empty()) {
                 double pos_eval = 0;
-                UnmarkPosition new_pos(ball_pos, tm, new_self_pos, n_step,
-                                       leadPos, true, true, pos_eval, passes);
+                UnmarkPosition new_pos(ball_pos, target, pos_eval, passes);
                 pos_eval = evaluate_position(wm, new_pos);
                 new_pos.eval = pos_eval;
+                char num[8];
+                snprintf(num, 8, "%d", position_id);
+                dlog.addMessage(Logger::POSITIONING, target + Vector2D(0, 0), num);
+                dlog.addCircle(Logger::POSITIONING, target, 0.5, 0, 0, 255);
+                dlog.addText(Logger::POSITIONING, "##%d (%.1f, %.1f) passes: %d eval: %.1f", position_id, target.x,
+                             target.y, passes.size(), pos_eval);
+                position_id++;
                 unmark_positions.push_back(new_pos);
+            } else {
+                dlog.addCircle(Logger::POSITIONING, target, 0.5, 0, 0, 0);
             }
         }
     }
 }
 
-double Bhv_Unmark::nearest_tm_dist_to(const WorldModel & wm, Vector2D point){
+double Bhv_Unmark::nearest_tm_dist_to(const WorldModel &wm, Vector2D point) {
 
     double dist = 1000;
-    for (auto & tm: wm.ourPlayers()){
-        if (tm != nullptr && tm->unum() > 0){
+    for (auto &tm: wm.teammatesFromSelf()) {
+        if (tm != nullptr && tm->unum() > 0) {
             if (!tm->pos().isValid())
                 continue;
             if (dist > tm->pos().dist(point))
@@ -253,125 +253,93 @@ double Bhv_Unmark::nearest_tm_dist_to(const WorldModel & wm, Vector2D point){
     return dist;
 }
 
-void Bhv_Unmark::lead_pass_simulator(const WorldModel & wm, Vector2D passer_pos,
-                                     Vector2D new_self_pos, int n_step, vector<passpos> & passes){
+void Bhv_Unmark::lead_pass_simulator(const WorldModel &wm, Vector2D passer_pos,
+                                     Vector2D unmark_target, int n_step, vector<UnmakingPass> &passes) {
 
     int mate_min = wm.interceptTable()->teammateReachCycle();
     Vector2D pass_start = wm.ball().inertiaPoint(mate_min);
     Vector2D current_self_pos = wm.self().pos();
-    
-    AngleDeg self_dist_angle = (new_self_pos - pass_start).th() + 90;
+
+    AngleDeg move_angle_to_receive_pass = (unmark_target - pass_start).th() + 90;
     int dist_step = 2;
-    
-    double distance = new_self_pos.dist(pass_start);
+
+    double distance = unmark_target.dist(pass_start);
 
     double pass_speed = 1.5;
     if (distance >= 20.0)
-        pass_speed = 2.7;
+        pass_speed = 3.0;
     else if (distance >= 8.0)
-        pass_speed = 2.5;
+        pass_speed = 2.7;
     else if (distance >= 5.0)
-        pass_speed = 2.0;
+        pass_speed = 2.2;
 
     for (int i = -2; i <= 2; i++) {
-        Vector2D pass_target = new_self_pos
-                               + Vector2D::polar2vector(i * dist_step, self_dist_angle);
-        double self_body = (new_self_pos - current_self_pos).th().degree();
-        double self_speed = 0.3;
-        int pass_cycle = self_cycle_intercept(wm, pass_start, pass_speed,
-                                              pass_target, self_body, self_speed);
+        Vector2D pass_target = unmark_target
+                               + Vector2D::polar2vector(i * dist_step, move_angle_to_receive_pass);
+        int pass_cycle = pass_travel_cycle(pass_start, pass_speed, pass_target);
         int min_opp_cut_cycle = opponents_cycle_intercept(wm, pass_start, pass_speed,
-                                                    pass_cycle, pass_target);
-        if (debug)
-            dlog.addText(Logger::POSITIONING,
-                         "      pass_start(%.1f,%.1f),pass_target(%.1f,%.1f),self_cycle(%d),opp_cycle(%d)",
-                         pass_start.x, pass_start.y, pass_target.x, pass_target.y,
-                         pass_cycle, min_opp_cut_cycle);
+                                                          pass_target);
+
 
         if (pass_cycle < min_opp_cut_cycle) {
-
+            dlog.addText(Logger::POSITIONING,
+                         "------pass_start(%.1f,%.1f), pass_target(%.1f,%.1f), self_cycle(%d), opp_cycle(%d) OK",
+                         pass_start.x, pass_start.y, pass_target.x, pass_target.y,
+                         pass_cycle, min_opp_cut_cycle);
             double pass_eval = pass_target.x + std::max(0.0, 40.0 - pass_target.dist(Vector2D(50.0, 0)));
 
-            if (debug)
-                dlog.addText(Logger::POSITIONING, "         eval(%.1f)",
-                             pass_eval);
+            UnmakingPass pass_obj = UnmakingPass(pass_target, pass_speed,
+                                                 pass_eval, pass_cycle);
 
-            passpos directpass = passpos(pass_target, pass_speed, true,
-                                         pass_eval, pass_cycle);
-
-            passes.push_back(directpass);
+            passes.push_back(pass_obj);
+        } else {
+            dlog.addText(Logger::POSITIONING,
+                         "------pass_start(%.1f,%.1f), pass_target(%.1f,%.1f), self_cycle(%d), opp_cycle(%d) NOT OK",
+                         pass_start.x, pass_start.y, pass_target.x, pass_target.y,
+                         pass_cycle, min_opp_cut_cycle);
         }
     }
 
 }
 
-int Bhv_Unmark::self_cycle_intercept(const WorldModel & wm,
-                                       Vector2D pass_start, double pass_speed, Vector2D & pass_target,
-                                       double self_body, double speed){
+int Bhv_Unmark::pass_travel_cycle(Vector2D pass_start, double pass_speed, Vector2D &pass_target) {
 
-    const ServerParam & SP = ServerParam::i();
-
-    AngleDeg pass_angle = (pass_target - pass_start).th();
-
-    Vector2D pass_start_vel = Vector2D::polar2vector(pass_speed, pass_angle);
-
-    const PlayerType * self_type = &(wm.self().playerType());
-
-    for (int cycle = 1; cycle < 50; cycle++) {
-        const Vector2D ball_pos = inertia_n_step_point(pass_start,
-                                                       pass_start_vel, cycle, SP.ballDecay());
-
-        double dash_dist = ball_pos.dist(pass_target);
-        dash_dist += 0.5;
-
-        int n_turn = abs(pass_angle.degree() - self_body) > 15 ? 1 : 0;
-        int n_dash = self_type->cyclesToReachDistance(dash_dist);
-
-        int n_step = n_dash + n_turn;
-
-        if (speed > 0.25 && n_turn == 0)
-            n_step--;
-
-        if (n_step <= cycle) {
-            pass_target = ball_pos;
+    const ServerParam &SP = ServerParam::i();
+    double travel_dist = 0;
+    for (int cycle = 1; cycle < 50; cycle += 1) {
+        travel_dist += pass_speed;
+        if (travel_dist > pass_target.dist(pass_start))
             return cycle;
-        }
     }
-    return 51;
+    return 1000;
 }
 
-int Bhv_Unmark::opponents_cycle_intercept(const WorldModel & wm,
-                                       Vector2D pass_start, double pass_speed, int pass_cycle,
-                                       Vector2D pass_target){
-
+int Bhv_Unmark::opponents_cycle_intercept(const WorldModel &wm,
+                                          Vector2D pass_start, double pass_speed,
+                                          Vector2D pass_target) {
     int min_cycle = 1000;
-
-    for (auto & opp: wm.opponentsFromSelf()){
+    for (auto &opp: wm.opponentsFromSelf()) {
         if (opp == nullptr)
             continue;
-        int opp_cycle = opponent_cycle_intercept(wm, opp, pass_start, pass_speed,
-                                                    pass_cycle, pass_target);
-
+        int opp_cycle = opponent_cycle_intercept(opp, pass_start, pass_speed, pass_target);
         if (min_cycle > opp_cycle)
             min_cycle = opp_cycle;
-
     }
     return min_cycle;
 
 }
 
-int Bhv_Unmark::opponent_cycle_intercept(const WorldModel & wm,
-                                            const AbstractPlayerObject * opp, Vector2D pass_start, double pass_speed,
-                                            int pass_cycle, Vector2D pass_target){
+int Bhv_Unmark::opponent_cycle_intercept(const AbstractPlayerObject *opp, Vector2D pass_start, double pass_speed,
+                                         Vector2D pass_target) {
 
-    const ServerParam & SP = ServerParam::i();
+    const ServerParam &SP = ServerParam::i();
 
     AngleDeg pass_angle = (pass_target - pass_start).th();
 
     Vector2D pass_start_vel = Vector2D::polar2vector(pass_speed, pass_angle);
     Vector2D opp_pos = (*opp).pos();
 
-    const PlayerType * opp_type = (*opp).playerTypePtr();
+    const PlayerType *opp_type = (*opp).playerTypePtr();
 
     for (int cycle = 1; cycle < 50; cycle++) {
         const Vector2D ball_pos = inertia_n_step_point(pass_start,
@@ -389,21 +357,20 @@ int Bhv_Unmark::opponent_cycle_intercept(const WorldModel & wm,
     return 50;
 }
 
-double Bhv_Unmark::evaluate_position(const WorldModel & wm, UnmarkPosition pos){
-    double sumEval = 0;
+double Bhv_Unmark::evaluate_position(const WorldModel &wm, const UnmarkPosition &unmark_position) {
+    double sum_eval = 0;
     double best_pass_eval = 0;
     double opp_eval = 10;
-    for (int i = 0; i <= pos.passposvector.size(); i++) {
+    for (auto &i: unmark_position.pass_list) {
+        if (best_pass_eval < i.pass_eval)
+            best_pass_eval = i.pass_eval;
 
-        if (best_pass_eval < pos.passposvector[i].eval)
-            best_pass_eval = pos.passposvector[i].eval;
-
-        sumEval += pos.passposvector[i].eval;
+        sum_eval += i.pass_eval;
     }
 
-    for (auto & opp: wm.theirPlayers()){
-        if (opp != nullptr && opp->unum() > 0){
-            double opp_dist = opp->pos().dist(pos.target);
+    for (auto &opp: wm.theirPlayers()) {
+        if (opp != nullptr && opp->unum() > 0) {
+            double opp_dist = opp->pos().dist(unmark_position.target);
             if (opp_dist < opp_eval)
                 opp_eval = opp_dist;
 
@@ -411,50 +378,44 @@ double Bhv_Unmark::evaluate_position(const WorldModel & wm, UnmarkPosition pos){
     }
 
     bool have_turn =
-            ((pos.target - wm.self().pos()).th() - wm.self().body()).abs()
-            < 15 ? false : true;
+            ((unmark_position.target - wm.self().pos()).th() - wm.self().body()).abs() >= 15;
     bool up_pos =
             wm.self().unum() >= 6
-            && (pos.target - wm.self().pos()).th().abs() < 60 ?
-            true : false;
-    sumEval /= pos.passposvector.size();
-    sumEval += (sumEval * pos.passposvector.size() / 10);
-    sumEval += best_pass_eval;
-    sumEval += opp_eval;
-    (!have_turn) ? sumEval += 10 : sumEval += 0;
-    (up_pos) ? sumEval += 10 : sumEval += 0;
-    return sumEval;
+            && (unmark_position.target - wm.self().pos()).th().abs() < 60;
+    sum_eval /= unmark_position.pass_list.size();
+    sum_eval += (sum_eval * unmark_position.pass_list.size() / 10);
+    sum_eval += best_pass_eval;
+    sum_eval += opp_eval;
+    (!have_turn) ? sum_eval += 10 : sum_eval += 0;
+    (up_pos) ? sum_eval += 10 : sum_eval += 0;
+    return sum_eval;
 }
 
-bool Bhv_Unmark::run(PlayerAgent * agent, UnmarkPosition Pos){
-    const WorldModel & wm = agent->world();
+bool Bhv_Unmark::run(PlayerAgent *agent, const UnmarkPosition &unmark_position) {
+    const WorldModel &wm = agent->world();
     Vector2D ball = wm.ball().pos();
     Vector2D me = wm.self().pos();
     Vector2D homePos = Strategy::i().getPosition(wm.self().unum());
     const int self_min = wm.interceptTable()->selfReachCycle();
     const int mate_min = wm.interceptTable()->teammateReachCycle();
     const int opp_min = wm.interceptTable()->opponentReachCycle();
-    const int our_min = std::min(self_min, mate_min);
 
     if (wm.self().unum() > 8 && ball.x < 40 && ball.x > -20
         && (wm.self().unum() < 11 || ball.x < 48) && me.dist(homePos) < 10
         && wm.self().pos().x < wm.offsideLineX() - 0.3
-        && // wm.self().pos().x > wm.offsideLineX() - 3.0 &&
-        homePos.x > wm.offsideLineX() - 10.0 && wm.self().body().abs() < 15.0
+        && homePos.x > wm.offsideLineX() - 10.0 && wm.self().body().abs() < 15.0
         && mate_min < opp_min && self_min > mate_min
         && wm.self().stamina() > 4000) {
         agent->doDash(100, 0.0);
-        target_pos = me+Vector2D(5,0);
+        last_target_pos = me + Vector2D(5, 0);
         last_cycle = 3;
         agent->setNeckAction(new Neck_TurnToBallOrScan(0));
-//		Arm_PointToPoint(me+Vector2D(10,0)).execute(agent);
         return true;
     }
     if (wm.self().unum() > 8 && ball.x < 40 && ball.x > -20
         && (wm.self().unum() < 11 || ball.x < 48) && me.dist(homePos) < 10
         && wm.self().pos().x < wm.offsideLineX() - 0.3
-        && // wm.self().pos().x > wm.offsideLineX() - 3.0 &&
-        homePos.x > wm.offsideLineX() - 10.0 && mate_min < opp_min
+        && homePos.x > wm.offsideLineX() - 10.0 && mate_min < opp_min
         && self_min > mate_min && wm.self().stamina() > 4000) {
         Body_TurnToAngle(0).execute(agent);
         last_cycle = 0;
@@ -463,28 +424,26 @@ bool Bhv_Unmark::run(PlayerAgent * agent, UnmarkPosition Pos){
     }
 
     double thr = 0.5;
-    if (agent->world().self().inertiaPoint(1).dist(Pos.target) < thr) {
-//		//Arm_PointToPoint(agent->world().self().pos()+Vector2D::polar2vector(100,(Pos.ballpos-Pos.target).th()+80)).execute(agent);
-        AngleDeg bestAngle = (Pos.ballpos - Pos.target).th() + 80;
+    if (agent->world().self().inertiaPoint(1).dist(unmark_position.target) < thr) {
+        AngleDeg bestAngle = (unmark_position.ball_pos - unmark_position.target).th() + 80;
         if (abs(bestAngle.degree()) > 90)
-            bestAngle = (Pos.ballpos - Pos.target).th() - 80;
+            bestAngle = (unmark_position.ball_pos - unmark_position.target).th() - 80;
         last_cycle = 0;
         Body_TurnToAngle(bestAngle).execute(agent);
         return true;
     }
-    Arm_PointToPoint(Pos.target).execute(agent);
-    double enerji = (
-            Pos.target.x > 30 ?
+    double dash_power = (
+            unmark_position.target.x > 30 ?
             100 : Strategy::get_normal_dash_power(agent->world()));
-    if (Pos.target.x > 30)
+    if (unmark_position.target.x > 30)
         agent->addSayMessage(
                 new SelfMessage(agent->world().self().pos(),
                                 agent->world().self().body(),
                                 agent->world().self().stamina()));
 
-    if (Pos.target.x > 30)
+    if (unmark_position.target.x > 30)
         thr = 0.2;
     last_cycle = 3;
-    target_pos = Pos.target;
-    return Body_GoToPoint(Pos.target, thr, enerji).execute(agent);
+    last_target_pos = unmark_position.target;
+    return Body_GoToPoint(unmark_position.target, thr, dash_power).execute(agent);
 }
