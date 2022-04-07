@@ -46,7 +46,8 @@ PLAYERSOURCES = \
 	strategy.cpp \
 	main_player.cpp \
 	data_extractor/DEState.cpp \
-    data_extractor/offensive_data_extractor.cpp
+    data_extractor/offensive_data_extractor.cpp \
+    bhv_unmark.cpp
 
 PLAYERHEADERS = \
 	bhv_basic_move.h \
@@ -92,7 +93,8 @@ PLAYERHEADERS = \
 	sample_player.h \
 	strategy.h \
 	data_extractor/DEState.h \
-	data_extractor/offensive_data_extractor.h
+	data_extractor/offensive_data_extractor.h \
+	bhv_unmark.h
 
 CHAINACTIONSOURCES = \
 	chain_action/actgen_action_chain_length_filter.h \
