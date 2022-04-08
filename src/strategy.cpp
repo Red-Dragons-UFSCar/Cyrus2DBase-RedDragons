@@ -619,42 +619,42 @@ Strategy::updatePosition( const WorldModel & wm )
     f->getPositions( ball_pos, M_positions );
 
     // G2d: various states
-    // bool indFK = false;
-    // if ( ( wm.gameMode().type() == GameMode::BackPass_
-    //        && wm.gameMode().side() == wm.theirSide() )
-    //      || ( wm.gameMode().type() == GameMode::IndFreeKick_
-    //           && wm.gameMode().side() == wm.ourSide() ) 
-    //      || ( wm.gameMode().type() == GameMode::FoulCharge_
-    //           && wm.gameMode().side() == wm.theirSide() )
-    //      || ( wm.gameMode().type() == GameMode::FoulPush_
-    //           && wm.gameMode().side() == wm.theirSide() )
-    //     )
-    //     indFK = true;
+    bool indFK = false;
+    if ( ( wm.gameMode().type() == GameMode::BackPass_
+           && wm.gameMode().side() == wm.theirSide() )
+         || ( wm.gameMode().type() == GameMode::IndFreeKick_
+              && wm.gameMode().side() == wm.ourSide() ) 
+         || ( wm.gameMode().type() == GameMode::FoulCharge_
+              && wm.gameMode().side() == wm.theirSide() )
+         || ( wm.gameMode().type() == GameMode::FoulPush_
+              && wm.gameMode().side() == wm.theirSide() )
+        )
+        indFK = true;
 
-    // bool dirFK = false;
-    // if ( 
-    //       ( wm.gameMode().type() == GameMode::FreeKick_
-    //           && wm.gameMode().side() == wm.ourSide() ) 
-    //      || ( wm.gameMode().type() == GameMode::FoulCharge_
-    //           && wm.gameMode().side() == wm.theirSide() )
-    //      || ( wm.gameMode().type() == GameMode::FoulPush_
-    //           && wm.gameMode().side() == wm.theirSide() )
-    //     )
-    //     dirFK = true;
+    bool dirFK = false;
+    if ( 
+          ( wm.gameMode().type() == GameMode::FreeKick_
+              && wm.gameMode().side() == wm.ourSide() ) 
+         || ( wm.gameMode().type() == GameMode::FoulCharge_
+              && wm.gameMode().side() == wm.theirSide() )
+         || ( wm.gameMode().type() == GameMode::FoulPush_
+              && wm.gameMode().side() == wm.theirSide() )
+        )
+        dirFK = true;
 
-    // bool cornerK = false;
-    // if ( 
-    //       ( wm.gameMode().type() == GameMode::CornerKick_
-    //           && wm.gameMode().side() == wm.ourSide() ) 
-    //     )
-    //     cornerK = true;
+    bool cornerK = false;
+    if ( 
+          ( wm.gameMode().type() == GameMode::CornerKick_
+              && wm.gameMode().side() == wm.ourSide() ) 
+        )
+        cornerK = true;
 
-    // bool kickin = false;
-    // if ( 
-    //       ( wm.gameMode().type() == GameMode::KickIn_
-    //           && wm.gameMode().side() == wm.ourSide() ) 
-    //     )
-    //     kickin = true;
+    bool kickin = false;
+    if ( 
+          ( wm.gameMode().type() == GameMode::KickIn_
+              && wm.gameMode().side() == wm.ourSide() ) 
+        )
+        kickin = true;
 
 
     // C2D: Helios 18 Tune removed -> replace with BNN
@@ -969,6 +969,59 @@ Strategy::updatePosition( const WorldModel & wm )
             }
         }
     }
+
+    int self_min = wm.interceptTable()->selfReachCycle();
+    int mate_min = wm.interceptTable()->teammateReachCycle();
+    int opp_min = wm.interceptTable()->opponentReachCycle();
+
+    const int our_min = std::min(self_min, mate_min);
+
+    // G2d : wing tactic
+    double wing_x = -15.0;
+    double wing_y = 7.0;
+    double wing_depth = 5.0;
+    double wing_limit = 39.0;
+
+    // C2D: Tune removed
+    // if (mt || helios2018)
+    // {
+    //     wing_depth = 10.0;
+    //     wing_y = 17.0;
+    // }
+
+    if (our_min < opp_min)
+        if (wm.ball().pos().x > wing_x)
+            if (wm.ball().pos().x < wing_limit)
+                if (fabs(wm.ball().pos().y) > wing_y)
+                    if (!indFK && !dirFK && !cornerK && !kickin)
+                    {
+                        M_positions[9 - 1].x = wm.offsideLineX() + wm.ball().vel().x;
+                        M_positions[10 - 1].x = wm.offsideLineX() + wm.ball().vel().x;
+                        M_positions[11 - 1].x = wm.offsideLineX() + wm.ball().vel().x;
+
+                        if (wm.ball().pos().y > 0)
+                        {
+                            M_positions[9 - 1].y = 15.0;
+                            M_positions[11 - 1].y = 22.5;
+                            M_positions[10 - 1].y = 30.0;
+                        }
+                        else
+                        {
+                            M_positions[9 - 1].y = -30.0;
+                            M_positions[11 - 1].y = -22.5;
+                            M_positions[10 - 1].y = -15.0;
+                        }
+
+                        double midX = wm.offsideLineX() - wing_depth;
+
+                        M_positions[6 - 1].x = midX;
+                        M_positions[7 - 1].x = midX;
+                        M_positions[8 - 1].x = midX;
+
+                        M_positions[7 - 1].y = M_positions[9 - 1].y;
+                        M_positions[6 - 1].y = M_positions[11 - 1].y;
+                        M_positions[8 - 1].y = M_positions[10 - 1].y;
+                    }
 
     M_position_types.clear();
     for ( int unum = 1; unum <= 11; ++unum )
