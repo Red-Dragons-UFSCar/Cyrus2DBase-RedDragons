@@ -38,7 +38,7 @@
 #include "strategy.h"
 #include "bhv_basic_tackle.h"
 #include "neck_offensive_intercept_neck.h"
-
+#include "bhv_basic_block.h"
 
 #include <rcsc/action/basic_actions.h>
 #include <rcsc/action/body_go_to_point.h>
