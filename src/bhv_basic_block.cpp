@@ -11,6 +11,7 @@
 #include "bhv_basic_block.h"
 #include "strategy.h"
 #include "bhv_basic_tackle.h"
+#include "neck_offensive_intercept_neck.h"
 
 #include <rcsc/action/basic_actions.h>
 #include <rcsc/action/body_go_to_point.h>
@@ -20,6 +21,7 @@
 #include <rcsc/player/intercept_table.h>
 #include <rcsc/common/logger.h>
 #include <rcsc/common/server_param.h>
+#include <rcsc/action/body_intercept.h>
 
 
 #define DEBUG_BLOCK
@@ -31,6 +33,24 @@ Vector2D Bhv_BasicBlock::last_block_pos = Vector2D::INVALIDATED;
 bool Bhv_BasicBlock::execute(PlayerAgent *agent)
 {
     const WorldModel &wm = agent->world();
+    const int self_min = wm.interceptTable()->selfReachCycle();
+    const int mate_min = wm.interceptTable()->teammateReachCycle();
+    const int opp_min = wm.interceptTable()->opponentReachCycle();
+    if ( ! wm.kickableTeammate()
+         && ( self_min <= 3
+              || ( self_min <= mate_min
+                   && self_min < opp_min + 3 ) // pressing
+         )
+            )
+    {
+        dlog.addText( Logger::TEAM,
+                      __FILE__": intercept" );
+        Body_Intercept().execute( agent );
+        agent->setNeckAction( new Neck_OffensiveInterceptNeck() );
+
+        return true;
+    }
+
     auto tm_blockers = get_blockers(agent);
 
     int self_unum = wm.self().unum();
