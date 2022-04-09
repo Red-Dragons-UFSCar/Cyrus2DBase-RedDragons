@@ -408,19 +408,16 @@ double ActionChainGraph::oppMinDist(const WorldModel &wm, Vector2D point){
 }
 #include "field_analyzer.h"
 double ActionChainGraph::calcDangerEvalForTarget(const WorldModel &wm, Vector2D target){
-    double danger_eval_areaA[16] = { 50, 40, 35, 20, 18, 16, 10 };
-    double danger_eval_areaB[16] = { 50, 40, 35, 15, 5, 4, 3 };
-    double danger_eval_areaC[16] = { 30, 25, 20, 15, 12, 10, 3 };
-
+    double danger_eval_base[16] = { 50, 30, 20, 10, 5, 2, 1 };
     double danger_eval[16] = {0, 0, 0, 0, 0, 0, 0 };
 
     for(int i = 0; i < 7; i++){
         if(wm.ball().pos().x < -20)
-            danger_eval[i] = danger_eval_areaA[i];
+            danger_eval[i] = danger_eval_base[i];
         else if(wm.ball().pos().x < 20)
-            danger_eval[i] = danger_eval_areaB[i];
+            danger_eval[i] = danger_eval_base[i] / 2.0;
         else
-            danger_eval[i] = danger_eval_areaC[i];
+            danger_eval[i] = danger_eval_base[i] / 4.0;
     }
     double dist_opp_target = oppMinDist(wm, target);
     if(dist_opp_target > 6)
