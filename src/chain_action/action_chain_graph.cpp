@@ -396,6 +396,55 @@ public:
       }
 };
 
+
+double ActionChainGraph::oppMinDist(const WorldModel &wm, Vector2D point){
+    double min = 100;
+    for(int i = 1; i<=11; i++){
+        const AbstractPlayerObject * opp = wm.theirPlayer(i);
+        if(opp!=NULL && opp->unum()>0 && !opp->goalie()){
+            double dist = opp->pos().dist(point);
+            if(dist < min)
+                min = dist;
+        }
+    }
+    return min;
+}
+#include "field_analyzer.h"
+double ActionChainGraph::calcDangerEvalForTarget(const WorldModel &wm, Vector2D target){
+    double danger_eval_base[16] = { 50, 30, 20, 10, 5, 2, 1 };
+    double danger_eval[16] = {0, 0, 0, 0, 0, 0, 0 };
+
+    for(int i = 0; i < 7; i++){
+        if(wm.ball().pos().x < -20)
+            danger_eval[i] = danger_eval_base[i];
+        else if(wm.ball().pos().x < 20)
+            danger_eval[i] = danger_eval_base[i] / 2.0;
+        else
+            danger_eval[i] = danger_eval_base[i] / 4.0;
+    }
+    double dist_opp_target = oppMinDist(wm, target);
+    if(dist_opp_target > 6)
+        dist_opp_target = 6;
+    double d = danger_eval[(int)dist_opp_target];;
+    return d;
+}
+
+double ActionChainGraph::calcDangerEvalForBhv(const WorldModel &wm, const ActionStatePair& bhv){
+    Vector2D bhv_target = bhv.M_action->targetPoint();
+    return calcDangerEvalForTarget(wm, bhv_target);
+}
+double ActionChainGraph::calcDangerEvalForChain(const WorldModel &wm, std::vector< ActionStatePair > series){
+    uint chain_size = series.size();
+    double max_danger_eval = 0;
+    for(uint i = 0; i <chain_size; i++){
+        ActionStatePair bhv = series[i];
+        double danger_eval = calcDangerEvalForBhv(wm, bhv);
+        if(danger_eval > max_danger_eval)
+            max_danger_eval = danger_eval;
+    }
+    return max_danger_eval;
+}
+
 /*-------------------------------------------------------------------*/
 /*!
 
@@ -427,7 +476,9 @@ ActionChainGraph::calculateResultBestFirstSearch( const WorldModel & wm,
     //
     const PredictState current_state( wm );
     const std::vector< ActionStatePair > empty_path;
-    const double current_evaluation = (*M_evaluator)( current_state, empty_path, wm);
+    double current_evaluation = (*M_evaluator)( current_state, empty_path, wm);
+    double danger_eval = calcDangerEvalForTarget(wm, current_state.ball().pos());
+    current_evaluation -= danger_eval;
     ++M_chain_count;
     ++(*n_evaluated);
 #ifdef ACTION_CHAIN_DEBUG
@@ -522,6 +573,9 @@ ActionChainGraph::calculateResultBestFirstSearch( const WorldModel & wm,
             candidate_series.push_back( *it );
 
             double ev = (*M_evaluator)( (*it).state(), candidate_series, wm );
+            danger_eval = calcDangerEvalForChain(wm,candidate_series);
+            ev -= danger_eval;
+
             ++(*n_evaluated);
 #ifdef ACTION_CHAIN_DEBUG
             write_chain_log( wm, M_chain_count, candidate_series, ev );

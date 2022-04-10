@@ -89,6 +89,10 @@ private:
                    unsigned long max_chain_length,
                    long max_evaluate_limit );
 
+    double oppMinDist(const rcsc::WorldModel & wm, rcsc::Vector2D point);
+    double calcDangerEvalForTarget(const rcsc::WorldModel & wm, rcsc::Vector2D target);
+    double calcDangerEvalForBhv(const rcsc::WorldModel & wm, const ActionStatePair& bhv);
+    double calcDangerEvalForChain(const rcsc::WorldModel & wm, std::vector< ActionStatePair > series);
     void calculateResultBestFirstSearch( const rcsc::WorldModel & wm,
                                          unsigned long * n_evaluated );
 
