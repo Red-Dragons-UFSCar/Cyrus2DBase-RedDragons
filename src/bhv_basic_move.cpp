@@ -34,13 +34,11 @@
 #include <config.h>
 #endif
 
-
-
 #include "bhv_basic_move.h"
 #include "strategy.h"
 #include "bhv_basic_tackle.h"
 #include "neck_offensive_intercept_neck.h"
-
+#include "bhv_basic_block.h"
 
 #include <rcsc/action/basic_actions.h>
 #include <rcsc/action/body_go_to_point.h>
@@ -101,9 +99,60 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
     // bool helios2018 = false;
     // if (wm.opponentTeamName().find("HELIOS2018") != std::string::npos)
 	// helios2018 = true;
-
+//    if (std::min(self_min, mate_min) < opp_min){
+//
+//    }else{
+//        if (Bhv_BasicBlock().execute(agent)){
+//            return true;
+//        }
+//    }
     // G2d: role
     int role = Strategy::i().roleNumber( wm.self().unum() );
+
+    // G2D: blocking
+
+    Vector2D ball = wm.ball().pos();
+
+    double block_d = -10.0;
+
+    Vector2D me = wm.self().pos();
+    Vector2D homePos = target_point;
+    int num = role;
+
+    auto opps = wm.opponentsFromBall();
+    const PlayerObject * nearest_opp
+            = ( opps.empty()
+                ? static_cast< PlayerObject * >( 0 )
+                : opps.front() );
+    const double nearest_opp_dist = ( nearest_opp
+                                      ? nearest_opp->distFromSelf()
+                                      : 1000.0 );
+    if (ball.x < block_d)
+    {
+        double block_line = -38.0;
+
+    //  if (helios2018)
+    //      block_line = -48.0;
+
+    // acknowledgement: fragments of Marlik-2012 code
+        if( (num == 2 || num == 3) && homePos.x < block_line &&
+            !( num == 2 && ball.x < -46.0 && ball.y > -18.0 && ball.y < -6.0 &&
+               opp_min <= 3 && opp_min <= mate_min && ball.dist(me) < 9.5 ) &&
+            !( num == 3 && ball.x < -46.0 && ball.y <  18.0 && ball.y >  6.0  &&
+               opp_min <= 3 && opp_min <= mate_min && ball.dist(me) < 9.5 ) ) // do not block in this situation
+        {
+            // do nothing
+        }
+        else if( (num == 2 || num == 3) && fabs(wm.ball().pos().y) > 22.0 )
+        {
+            // do nothing
+        }
+        else if (Bhv_BasicBlock().execute(agent)){
+            return true;
+        }
+
+    } // end of block
+
 
     // G2d: pressing
     int pressing = 13;
@@ -133,9 +182,9 @@ Bhv_BasicMove::execute( PlayerAgent * agent )
         return true;
     }
 
+
+
 // G2D : offside trap
-    Vector2D me = wm.self().pos();
-    Vector2D homePos = target_point;
     double first = 0.0, second = 0.0;
     const auto t3_end = wm.teammatesFromSelf().end();
         for ( auto it = wm.teammatesFromSelf().begin();
