@@ -37,7 +37,6 @@ OffensiveDataExtractor::~OffensiveDataExtractor() {
 OffensiveDataExtractor::Option::Option() {
     cycle = true; //
     ball_pos = true;
-    offside_count = true;
     unum = BOTH;
     pos = BOTH;
     relativePos = BOTH;
@@ -86,10 +85,6 @@ std::string OffensiveDataExtractor::get_header() {
         header += "cycle,";
     if (option.ball_pos){
         header += std::string("ball_pos_x,ball_pos_y,ball_pos_r,ball_pos_t,");
-    }
-
-    if (option.offside_count){
-        header += "offside_count,";
     }
 
     for (int i = 1; i <= 11; i++) {
@@ -279,12 +274,6 @@ void OffensiveDataExtractor::extract_ball(DEState &state) {
             dlog.addText(Logger::BLOCK, "##@add ball invalid pos x y r t");
             #endif
         }
-    }
-    if (option.offside_count){
-        ADD_ELEM("offside_count", convertor_counts(state.offsideLineCount()));
-        #ifdef ODEDebug
-        dlog.addText(Logger::BLOCK, "##add offside count");
-        #endif
     }
 }
 

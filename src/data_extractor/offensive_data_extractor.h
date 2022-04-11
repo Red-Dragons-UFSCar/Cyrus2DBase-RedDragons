@@ -29,7 +29,6 @@ private:
     public:
         bool cycle;
         bool ball_pos;
-        bool offside_count;
         ODEDataSide unum;
         ODEDataSide pos;
         ODEDataSide relativePos;
