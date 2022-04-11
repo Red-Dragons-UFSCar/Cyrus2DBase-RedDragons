@@ -71,10 +71,11 @@ public:
     int opponents_cycle_intercept(const WorldModel &wm,
                                   Vector2D pass_start,
                                   double pass_speed,
-                                  Vector2D pass_target);
+                                  Vector2D pass_target,
+                                  int pass_cycle);
 
     int opponent_cycle_intercept(const AbstractPlayerObject *opp, Vector2D pass_start, double pass_speed,
-                                 Vector2D pass_target);
+                                 Vector2D pass_target, int pass_cycle);
 
     double evaluate_position(const WorldModel &wm, const UnmarkPosition &unmark_position);
 
