@@ -411,7 +411,7 @@ double ActionChainGraph::oppMinDist(const WorldModel &wm, Vector2D point){
 }
 #include "field_analyzer.h"
 double ActionChainGraph::calcDangerEvalForTarget(const WorldModel &wm, Vector2D target){
-    double danger_eval_base[16] = { 50, 30, 20, 10, 5, 2, 1 };
+    double danger_eval_base[16] = { 20, 10, 5, 3, 2, 1, 0 };
     double danger_eval[16] = {0, 0, 0, 0, 0, 0, 0 };
 
     for(int i = 0; i < 7; i++){
