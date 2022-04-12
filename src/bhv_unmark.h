@@ -1,6 +1,9 @@
-//
-// Created by nader on 2022-04-06.
-//
+/*
+    Copyright:
+    Cyrus2D
+    Modified by Nader Zare, Omid Amini
+*/
+
 
 #ifndef CYRUS2DBASE_BHV_UNMARK_H
 #define CYRUS2DBASE_BHV_UNMARK_H
@@ -10,9 +13,28 @@
 #include <rcsc/player/abstract_player_object.h>
 #include <utility>
 #include <vector>
+#include <CppDNN/DeepNueralNetwork.h>
 
 using namespace std;
 using namespace rcsc;
+
+
+class pass_prob {
+public:
+    double prob = 0.0;
+    int pass_sender = 0;
+    int pass_getter = 0;
+
+    pass_prob(double prob, int pass_sender, int pass_getter)
+        : prob(prob), pass_sender(pass_sender), pass_getter(pass_getter)
+    {
+    }
+
+    static bool ProbCmp(pass_prob const &a, pass_prob const &b)
+    {
+        return a.prob < b.prob;
+    }
+};
 
 class Bhv_Unmark
         : public rcsc::SoccerBehavior {
@@ -27,6 +49,23 @@ public:
 
         explicit UnmakingPass(Vector2D target, double speed, double eval, double cycle)
                 : pass_target(target), pass_speed(speed), pass_eval(eval), pass_cycle(cycle) {
+        }
+    };
+
+    struct unmark_passer
+    {
+        int unum = 0;
+        Vector2D ballpos = Vector2D::INVALIDATED;;
+        int oppmin_cycle = 0;
+        int cycle_recive_ball = 0;
+        bool is_fastest = false;
+        unmark_passer(int unum, Vector2D ballpos, int oppmin_cycle, int cycle_recive_ball)
+            : unum(unum), ballpos(ballpos), oppmin_cycle(oppmin_cycle), cycle_recive_ball(cycle_recive_ball)
+        {
+        }
+        unmark_passer()
+        {
+            ballpos = Vector2D::INVALIDATED;
         }
     };
 
@@ -63,7 +102,7 @@ public:
     void lead_pass_simulator(const WorldModel &wm,
                              Vector2D passer_pos,
                              Vector2D unmark_target,
-                             int n_step,
+                            //  int n_step,
                              vector<UnmakingPass> &passes);
 
     int pass_travel_cycle(Vector2D pass_start, double pass_speed, Vector2D &pass_target);
@@ -80,6 +119,16 @@ public:
     double evaluate_position(const WorldModel &wm, const UnmarkPosition &unmark_position);
 
     bool run(PlayerAgent *agent, const UnmarkPosition &unmark_position);
+
+    static DeepNueralNetwork * pass_prediction;
+
+    static void load_dnn();
+
+    vector<pass_prob> predict_pass_dnn(vector<double> & features, vector<int> ignored_player, int kicker);
+
+    int find_passer_dnn(const WorldModel & wm, PlayerAgent * agent);
+
 };
+
 
 #endif //CYRUS2DBASE_BHV_UNMARK_H
