@@ -17,9 +17,6 @@ using namespace rcsc;
 class Bhv_Unmark
         : public rcsc::SoccerBehavior {
 public:
-    static int last_cycle;
-    static Vector2D last_target_pos;
-
     Bhv_Unmark() = default;
 
     struct UnmakingPass {
@@ -34,15 +31,23 @@ public:
     };
 
     struct UnmarkPosition {
+        int id;
         Vector2D ball_pos;
         Vector2D target;
         double eval;
         vector<UnmakingPass> pass_list;
-
-        UnmarkPosition(Vector2D ball_pos, Vector2D target, double eval, vector<UnmakingPass> pass_list)
-                : ball_pos(ball_pos), target(target), eval(eval), pass_list(std::move(pass_list)) {
+        int end_valid_cycle;
+        int last_run_cycle;
+        UnmarkPosition(int id, Vector2D ball_pos, Vector2D target, double eval, vector<UnmakingPass> pass_list)
+                : id(id), ball_pos(ball_pos), target(target), eval(eval), pass_list(std::move(pass_list)),
+                  end_valid_cycle(0), last_run_cycle(0) {
+        }
+        UnmarkPosition(){
+            target = Vector2D::INVALIDATED;
         }
     };
+
+    static UnmarkPosition last_unmark_position;
 
     bool execute(PlayerAgent *agent) override;
 
@@ -66,10 +71,11 @@ public:
     int opponents_cycle_intercept(const WorldModel &wm,
                                   Vector2D pass_start,
                                   double pass_speed,
-                                  Vector2D pass_target);
+                                  Vector2D pass_target,
+                                  int pass_cycle);
 
     int opponent_cycle_intercept(const AbstractPlayerObject *opp, Vector2D pass_start, double pass_speed,
-                                 Vector2D pass_target);
+                                 Vector2D pass_target, int pass_cycle);
 
     double evaluate_position(const WorldModel &wm, const UnmarkPosition &unmark_position);
 
