@@ -175,7 +175,8 @@ ActionChainGraph::calculateResult( const WorldModel & wm )
     }
 
     ActionStatePair *first_layer = M_result.begin().base();
-    OffensiveDataExtractor::i().generate_save_data(wm, first_layer->action());
+    if (first_layer->action().category() == CooperativeAction::Pass)
+        OffensiveDataExtractor::i().generate_save_data(wm, first_layer->action());
 
     write_chain_log( ">>>>> best chain: ",
                      wm,
