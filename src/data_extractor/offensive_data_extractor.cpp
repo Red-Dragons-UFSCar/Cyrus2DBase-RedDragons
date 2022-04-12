@@ -42,7 +42,6 @@ OffensiveDataExtractor::Option::Option() {
     relativePos = BOTH;
     polarPos = BOTH;
     isKicker = TM;
-    isGhost = TM;
     openAnglePass = TM;
     nearestOppDist = TM;
     polarGoalCenter = TM;
@@ -63,7 +62,7 @@ void OffensiveDataExtractor::init_file(DEState &state) {
     time(&rawtime);
     timeinfo = localtime(&rawtime);
 
-    std::string dir = "/home/nader/workspace/robo/Cyrus2DBase/data/";
+    std::string dir = "/data1/nader/workspace/robo/base_data/";
     strftime(buffer, sizeof(buffer), "%Y-%m-%d-%H-%M-%S", timeinfo);
     std::string str(buffer);
     std::string rand_name = std::to_string(SamplePlayer::player_port);
@@ -108,18 +107,15 @@ std::string OffensiveDataExtractor::get_header() {
             header += "p_l_" + std::to_string(i) + "_in_offside,";
         if (option.isKicker == TM || option.isKicker == BOTH)
             header += "p_l_" + std::to_string(i) + "_is_kicker,";
-        if (option.isGhost == TM || option.isGhost == BOTH)
-            header += "p_l_" + std::to_string(i) + "_is_ghost,";
         if (option.openAnglePass == TM || option.openAnglePass == BOTH) {
-            header += "p_l_" + std::to_string(i) + "_pass_dist,";
-            header += "p_l_" + std::to_string(i) + "_pass_opp1_dist,";
-            header += "p_l_" + std::to_string(i) + "_pass_opp1_dist_proj_to_opp,";
-            header += "p_l_" + std::to_string(i) + "_pass_opp1_dist_proj_to_kicker,";
-            header += "p_l_" + std::to_string(i) + "_pass_opp1_open_angle,";
+            header += "p_l_" + std::to_string(i) + "_pass_opp_dist,";
+            header += "p_l_" + std::to_string(i) + "_pass_opp_dist_proj_to_opp,";
+            header += "p_l_" + std::to_string(i) + "_pass_opp_dist_proj_to_kicker,";
+            header += "p_l_" + std::to_string(i) + "_pass_opp_open_angle,";
         }
         if (option.nearestOppDist == TM || option.nearestOppDist == BOTH){
-            header += "p_l_" + std::to_string(i) + "_near1_opp_dist,";
-            header += "p_l_" + std::to_string(i) + "_near1_opp_angle,";
+            header += "p_l_" + std::to_string(i) + "_opp_dist,";
+            header += "p_l_" + std::to_string(i) + "_opp_angle,";
         }
         if (option.polarGoalCenter == TM || option.polarGoalCenter == BOTH) {
             header += "p_l_" + std::to_string(i) + "_angle_goal_center_r,";
@@ -147,15 +143,13 @@ std::string OffensiveDataExtractor::get_header() {
         }
         if (option.isKicker == OPP || option.isKicker == BOTH)
             header += "p_r_" + std::to_string(i) + "_is_kicker,";
-        if (option.isGhost == OPP || option.isGhost == BOTH)
-            header += "p_r_" + std::to_string(i) + "_is_ghost,";
         if (option.openAnglePass == OPP || option.openAnglePass == BOTH) {
             header += "p_r_" + std::to_string(i) + "_pass_angle,";
             header += "p_r_" + std::to_string(i) + "_pass_dist,";
         }
         if (option.nearestOppDist == OPP || option.nearestOppDist == BOTH){
-            header += "p_r_" + std::to_string(i) + "_near1_opp_dist,";
-            header += "p_r_" + std::to_string(i) + "_near1_opp_angle,";
+            header += "p_r_" + std::to_string(i) + "_opp_dist,";
+            header += "p_r_" + std::to_string(i) + "_opp_angle,";
         }
         if (option.polarGoalCenter == OPP || option.polarGoalCenter == BOTH) {
             header += "p_r_" + std::to_string(i) + "_angle_coal_center_r,";
@@ -164,7 +158,7 @@ std::string OffensiveDataExtractor::get_header() {
         if (option.openAngleGoal == OPP || option.openAngleGoal == BOTH)
             header += "p_r_" + std::to_string(i) + "_open_goal_Angle,";
     }
-    header += "out_category,out_target_x,out_target_y,out_unum,out_unum_index,out_ball_speed,out_ball_dir,out_desc,";
+    header += "out_target_x,out_target_y,out_unum,";
     return header;
 }
 
@@ -309,13 +303,6 @@ void OffensiveDataExtractor::extract_players(DEState &state) {
             } else
                 ADD_ELEM("is_kicker", 0);
         }
-        if (option.isGhost == side || option.isGhost == BOTH) {
-            if (player->isGhost()) {
-                ADD_ELEM("is_ghost", 1);
-            } else
-                ADD_ELEM("is_ghost", 0);
-        }
-
         extract_pass_angle(player, state, side);
         extract_goal_polar(player, side);
         extract_goal_open_angle(player, state, side);
@@ -380,15 +367,11 @@ void OffensiveDataExtractor::add_null_player(int unum, ODEDataSide side) {
     }
     if (option.isKicker == side || option.isKicker == BOTH)
         ADD_ELEM("is_kicker", invalid_data_);
-    if (option.isGhost == side || option.isGhost == BOTH) {
-        ADD_ELEM("is_ghost", invalid_data_);
-    }
     if (option.openAnglePass == side || option.openAnglePass == BOTH) {
-        ADD_ELEM("pass_dist", invalid_data_);
         ADD_ELEM("pass_opp1_dist", invalid_data_);
-        ADD_ELEM("pass_opp1_angle", invalid_data_);
-        ADD_ELEM("pass_opp1_dist_line", invalid_data_);
-        ADD_ELEM("pass_opp1_dist_proj", invalid_data_);
+        ADD_ELEM("pass_opp1_dist_proj_to_opp", invalid_data_);
+        ADD_ELEM("pass_opp1_dist_proj_to_kicker", invalid_data_);
+        ADD_ELEM("pass_opp1_open_angle", invalid_data_);
     }
     if (option.nearestOppDist == side || option.nearestOppDist == BOTH){
         ADD_ELEM("opp1_dist", invalid_data_);
@@ -409,26 +392,9 @@ void OffensiveDataExtractor::extract_output(DEState &state,
                                    const int &unum,
                                    const char *desc,
                                    double ball_speed) {
-    ADD_ELEM("category", category);
     ADD_ELEM("target_x", convertor_x(target.x));
     ADD_ELEM("target_y", convertor_y(target.y));
     ADD_ELEM("unum", unum);
-    ADD_ELEM("unum_index", find_unum_index(state, unum));
-    ADD_ELEM("ball_speed", convertor_bv(ball_speed));
-    ADD_ELEM("ball_dir", convertor_angle((target - state.ball().pos()).th().degree()));
-    if (category == 2) {
-        if (std::string(desc) == "strictDirect") {
-            ADD_ELEM("desc", 0);
-        } else if (std::string(desc) == "strictLead") {
-            ADD_ELEM("desc", 1);
-        } else if (std::string(desc) == "strictThrough") {
-            ADD_ELEM("desc", 2);
-        } else if (std::string(desc) == "cross") {
-            ADD_ELEM("desc", 3);
-        }
-    } else {
-        ADD_ELEM("desc", 4);
-    }
 }
 
 void OffensiveDataExtractor::extract_pass_angle(DEPlayer *player, DEState &state, ODEDataSide side) {
@@ -446,18 +412,17 @@ void OffensiveDataExtractor::extract_pass_angle(DEPlayer *player, DEState &state
             #ifdef ODEDebug
             dlog.addText(Logger::BLOCK, "#### add invalid data for open angle pass");
             #endif
-            ADD_ELEM("pass_dist", invalid_data_);
-            ADD_ELEM("pass_opp1_dist", invalid_data_);
-            ADD_ELEM("pass_opp1_angle", invalid_data_);
-            ADD_ELEM("pass_opp1_dist_line", invalid_data_);
-            ADD_ELEM("pass_opp1_dist_proj", invalid_data_);
+            ADD_ELEM("pass_opp_dist", invalid_data_);
+            ADD_ELEM("pass_opp_dist_proj_to_opp", invalid_data_);
+            ADD_ELEM("pass_opp_dist_proj_to_kicker", invalid_data_);
+            ADD_ELEM("pass_opp_open_angle", invalid_data_);
         }
         if (option.nearestOppDist == side || option.nearestOppDist == BOTH){
             #ifdef ODEDebug
             dlog.addText(Logger::BLOCK, "#### add invalid for nearest opp dist");
             #endif
-            ADD_ELEM("opp1_dist", invalid_data_);
-            ADD_ELEM("opp1_angle", invalid_data_);
+            ADD_ELEM("opp_dist", invalid_data_);
+            ADD_ELEM("opp_angle", invalid_data_);
         }
         return;
     }
@@ -470,7 +435,7 @@ void OffensiveDataExtractor::extract_pass_angle(DEPlayer *player, DEState &state
         #endif
         if (!opp->pos().isValid()) continue;
         candid.dist_self_to_opp = opp->pos().dist(ball_pos);
-        opp_dist_angle.push_back(std::make_pair(opp->pos().dist(ball_pos), (opp->pos() - ball_pos).th().degree()));
+        opp_dist_angle.push_back(std::make_pair(opp->pos().dist(tm_pos), (opp->pos() - tm_pos).th().degree()));
         AngleDeg diff = (tm_pos - ball_pos).th() - (opp->pos() - ball_pos).th();
         #ifdef ODEDebug
         dlog.addText(Logger::BLOCK, "######check opp %d in %.1f,%.1f, diff:%.1f", opp->unum(), opp->pos().x, opp->pos().y, diff.degree());
@@ -479,6 +444,7 @@ void OffensiveDataExtractor::extract_pass_angle(DEPlayer *player, DEState &state
             continue;
         if (opp->pos().dist(ball_pos) > tm_pos.dist(ball_pos) + 10.0)
             continue;
+        candid.unum = opp->unum();
         candid.open_angle = diff.abs();
         Vector2D proj_pos = Line2D(ball_pos, tm_pos).projection(opp->pos());
         candid.dist_opp_proj = proj_pos.dist(opp->pos());
@@ -492,24 +458,23 @@ void OffensiveDataExtractor::extract_pass_angle(DEPlayer *player, DEState &state
         };
         std::sort(candidates.begin(), candidates.end(), open_angle_sorter);
 
-        ADD_ELEM("pass_dist", convertor_dist(ball_pos.dist(tm_pos)));
         if (candidates.size() >= 1){
             #ifdef ODEDebug
-            dlog.addText(Logger::BLOCK, "###### add opp angle pass first");
+            dlog.addText(Logger::BLOCK, "###### add opp %d angle pass first", candidates[0].unum);
             #endif
-            ADD_ELEM("pass_opp1_dist", convertor_dist(candidates[0].dist_self_to_opp));
-            ADD_ELEM("pass_opp1_dist_proj_to_opp", convertor_dist(candidates[0].dist_opp_proj));
-            ADD_ELEM("pass_opp1_dist_proj_to_kicker", convertor_dist(candidates[0].dist_self_to_opp_proj));
-            ADD_ELEM("pass_opp1_open_angle", convertor_angle(candidates[0].open_angle));
+            ADD_ELEM("pass_opp_dist", convertor_dist(candidates[0].dist_self_to_opp));
+            ADD_ELEM("pass_opp_dist_proj_to_opp", convertor_dist(candidates[0].dist_opp_proj));
+            ADD_ELEM("pass_opp_dist_proj_to_kicker", convertor_dist(candidates[0].dist_self_to_opp_proj));
+            ADD_ELEM("pass_opp_open_angle", convertor_angle(candidates[0].open_angle));
         }
         else{
             #ifdef ODEDebug
             dlog.addText(Logger::BLOCK, "###### add opp angle pass first invalid");
             #endif
-            ADD_ELEM("pass_opp1_dist", invalid_data_);
-            ADD_ELEM("pass_opp1_angle", invalid_data_);
-            ADD_ELEM("pass_opp1_dist_line", invalid_data_);
-            ADD_ELEM("pass_opp1_dist_proj", invalid_data_);
+            ADD_ELEM("pass_opp_dist", invalid_data_);
+            ADD_ELEM("pass_opp_dist_proj_to_opp", invalid_data_);
+            ADD_ELEM("pass_opp_dist_proj_to_kicker", invalid_data_);
+            ADD_ELEM("pass_opp_open_angle", invalid_data_);
         }
     }
     if (option.nearestOppDist == side || option.nearestOppDist == BOTH){
@@ -518,15 +483,15 @@ void OffensiveDataExtractor::extract_pass_angle(DEPlayer *player, DEState &state
             #ifdef ODEDebug
             dlog.addText(Logger::BLOCK, "###### add opp pass dist first");
             #endif
-            ADD_ELEM("opp1_dist", convertor_dist(opp_dist_angle[0].first));
-            ADD_ELEM("opp1_angle", convertor_angle(opp_dist_angle[0].second));
+            ADD_ELEM("opp_dist", convertor_dist(opp_dist_angle[0].first));
+            ADD_ELEM("opp_angle", convertor_angle(opp_dist_angle[0].second));
         }
         else{
             #ifdef ODEDebug
             dlog.addText(Logger::BLOCK, "###### add opp pass dist first invalid");
             #endif
-            ADD_ELEM("opp1_dist", invalid_data_);
-            ADD_ELEM("opp1_angle", invalid_data_);
+            ADD_ELEM("opp_dist", invalid_data_);
+            ADD_ELEM("opp_angle", invalid_data_);
         }
     }
 }

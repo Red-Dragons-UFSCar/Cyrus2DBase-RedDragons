@@ -34,7 +34,6 @@ private:
         ODEDataSide relativePos;
         ODEDataSide polarPos;
         ODEDataSide isKicker;
-        ODEDataSide isGhost;
         ODEDataSide openAnglePass;
         ODEDataSide nearestOppDist;
         ODEDataSide polarGoalCenter;
@@ -148,6 +147,7 @@ public:
 
 class ODEOpenAngle {
 public:
+    int unum;
     double dist_self_to_opp;
     double dist_self_to_opp_proj;
     double dist_opp_proj;
@@ -155,11 +155,13 @@ public:
 
     ODEOpenAngle(){};
     ODEOpenAngle(
+        int _unum,
         double _dist_self_to_opp,
         double _dist_self_to_opp_proj,
         double _dist_opp_proj,
         double _open_angle
     ) {
+        unum = _unum;
         dist_self_to_opp = _dist_self_to_opp;
         dist_self_to_opp_proj = _dist_self_to_opp_proj;
         dist_opp_proj = _dist_opp_proj;
