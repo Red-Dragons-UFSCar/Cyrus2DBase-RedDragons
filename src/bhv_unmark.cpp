@@ -41,6 +41,7 @@ DeepNueralNetwork * Bhv_Unmark::pass_prediction = new DeepNueralNetwork();
 
 bool Bhv_Unmark::execute(PlayerAgent *agent) {
     const WorldModel &wm = agent->world();
+    int passer = find_passer_dnn(wm,agent);
     if (!can_unmarking(wm))
         return false;
 
@@ -75,7 +76,7 @@ bool Bhv_Unmark::execute(PlayerAgent *agent) {
     //     ignored_player.push_back(5);
     //     auto passes = predict_pass_dnn(features, ignored_player, fastest_tm);
     // }
-    int passer = find_passer_dnn(wm,agent);
+
     // std::cout << wm.time().cycle()  << "ed___ " << wm.self().unum() << " __ "  << passer << std::endl;
     // passer = passer_finder(agent);
 
@@ -470,7 +471,7 @@ void Bhv_Unmark::load_dnn(){
     if(!load_dnn){
         load_dnn = true; 
         // std::cout << "dnn loading" << std::endl;
-        pass_prediction->ReadFromKeras("/mnt/g/ubuntu/rcss/cyrus-base/Cyrus2DBase/scripts/training_unmark/model.txt");
+        pass_prediction->ReadFromKeras("/home/nader/workspace/robo/Cyrus2DBase/scripts/training_unmark/best_model.txt");
         // TODO: Other Teams
     }
 }
@@ -484,16 +485,23 @@ vector<pass_prob> Bhv_Unmark::predict_pass_dnn(vector<double> & features, vector
     pass_prediction->Calculate(input);
     vector<pass_prob> predict;
     for (int i = 0; i < 12; i++){
-        if (i != 0 && std::find(ignored_player.begin(), ignored_player.end(), i) == std::end(ignored_player))
+
+        if (i == 0){
+            dlog.addText(Logger::POSITIONING, "##### Pass from %d to %d : %.6f NOK(0)", kicker, i, pass_prediction->mOutput(i));
+        }else if(std::find(ignored_player.begin(), ignored_player.end(), i) == std::end(ignored_player)){
+            dlog.addText(Logger::POSITIONING, "##### Pass from %d to %d : %.6f OKKKK", kicker, i, pass_prediction->mOutput(i));
             predict.push_back(pass_prob(pass_prediction->mOutput(i), kicker, i));
+        }else{
+            dlog.addText(Logger::POSITIONING, "##### Pass from %d to %d : %.6f NOK(ignored)", kicker, i, pass_prediction->mOutput(i));
+        }
     }
     std::sort(predict.begin(), predict.end(),pass_prob::ProbCmp);
     return predict;
 }
 
-// /*
+
 int Bhv_Unmark::find_passer_dnn(const WorldModel & wm, PlayerAgent * agent){
-    dlog.addText(Logger::MARK, "############### Start Update Passer DNN ###########");
+    dlog.addText(Logger::POSITIONING, "############### Start Update Passer DNN ###########");
     DEState state = DEState(wm);
 
     int fastest_tm = 0;
@@ -513,99 +521,59 @@ int Bhv_Unmark::find_passer_dnn(const WorldModel & wm, PlayerAgent * agent){
             ignored += std::to_string(i) + ",";
         }
     }
-    dlog.addText(Logger::MARK, "ignored: %s", ignored.c_str());
-    
-    
+    dlog.addText(Logger::POSITIONING, "ignored: %s", ignored.c_str());
     vector<pass_prob> best_passes;
     vector<pass_prob> all_passes;
+    all_passes.push_back(pass_prob(100.0, 0, fastest_tm));
 
-    // first pass
-    std::sort(all_passes.begin(), all_passes.end(),pass_prob::ProbCmp);
-    {
-        auto features = OffensiveDataExtractor::i().get_data(state);
-        auto passes = predict_pass_dnn(features, ignored_player, fastest_tm);
-        dlog.addText(Logger::MARK, "###Best Pass From %d", fastest_tm);
-        for (auto &p: passes){
-            dlog.addText(Logger::MARK, "######pass from %d to %d, %.5f", p.pass_sender, p.pass_getter, p.prob);
-        }
-        
-        int max_pass = 2;
-        for (int p = passes.size() - 1; p >= 0; p--){
-            if (max_pass == 0)
-                break;
-            all_passes.push_back(passes[p]);
-            max_pass -= 1;
-        }
-        ignored_player.push_back(fastest_tm);
-    }
-    // incoming pass
-    for (int processed_player = 0; processed_player < 6; processed_player++){
+    for (int processed_player = 0; processed_player < 6 && all_passes.size() > 0; processed_player++){
         std::sort(all_passes.begin(), all_passes.end(),pass_prob::ProbCmp);
-        if (all_passes.size() > 0){
-            auto best_pass = all_passes.back();
-            all_passes.pop_back();
-            
-            dlog.addText(Logger::MARK, "###selected best pass: %d to %d, %.5f", best_pass.pass_sender, best_pass.pass_getter, best_pass.prob);
-            if (std::find(ignored_player.begin(), ignored_player.end(), best_pass.pass_getter) != ignored_player.end()){
-                dlog.addText(Logger::MARK, "######is in ignored");
-                continue;
-            }
-            if (best_pass.prob < 0.01){
-                dlog.addText(Logger::MARK, "######is not valuable");
-                continue;
-            }
+        auto best_pass = all_passes.back();
+        all_passes.pop_back();
 
+        dlog.addText(Logger::POSITIONING, "###selected best pass: %d to %d, %.5f", best_pass.pass_sender, best_pass.pass_getter, best_pass.prob);
+        if (std::find(ignored_player.begin(), ignored_player.end(), best_pass.pass_getter) != ignored_player.end()){
+            dlog.addText(Logger::POSITIONING, "######is in ignored");
+            continue;
+        }
+        if (best_pass.prob < 0.01){
+            dlog.addText(Logger::POSITIONING, "######is not valuable");
+            continue;
+        }
+
+        if (best_pass.pass_sender != 0)
             best_passes.push_back(best_pass);
-            ignored_player.push_back(best_pass.pass_getter);
-        
-            if (state.updateKicker(best_pass.pass_getter)){
-                auto features = OffensiveDataExtractor::i().get_data(state);
-                auto passes = predict_pass_dnn(features, ignored_player, best_pass.pass_getter);
+        ignored_player.push_back(best_pass.pass_getter);
 
-                for (auto &p: passes){
-                    dlog.addText(Logger::MARK, "######pass from %d to %d, %.5f", p.pass_sender, p.pass_getter, p.prob);
-                }
-                int max_pass = 2;
-                for (int p = passes.size() - 1; p >= 0; p--){
-                    if (max_pass == 0)
-                        break;
-                    all_passes.push_back(passes[p]);
-                    max_pass -= 1;
-                }
+        if (state.updateKicker(best_pass.pass_getter)){
+            auto features = OffensiveDataExtractor::i().get_data(state);
+            auto passes = predict_pass_dnn(features, ignored_player, best_pass.pass_getter);
+            int max_pass = 2;
+            for (int p = passes.size() - 1; p >= 0; p--){
+                if (max_pass == 0)
+                    break;
+                all_passes.push_back(passes[p]);
+                max_pass -= 1;
             }
         }
     }
-    
-    vector<unmark_passer> res;
 
+    vector<unmark_passer> res;
     for (auto &p : best_passes)
     {
         Vector2D kicker_pos = wm.ourPlayer(p.pass_sender)->pos();
         Vector2D target_pos = wm.ourPlayer(p.pass_getter)->pos();
-        agent->debugClient().addLine(kicker_pos - Vector2D(-0.2, 0), target_pos - Vector2D(-0.2, 0));
-        agent->debugClient().addLine(kicker_pos - Vector2D(-0.1, 0), target_pos - Vector2D(-0.1, 0));
-        agent->debugClient().addLine(kicker_pos, target_pos);
-        agent->debugClient().addLine(kicker_pos - Vector2D(0.2, 0), target_pos - Vector2D(0.2, 0));
-        agent->debugClient().addLine(kicker_pos - Vector2D(0.1, 0), target_pos - Vector2D(0.1, 0));
-        agent->debugClient().addCircle(target_pos, 2);
-        if (p.pass_getter == wm.self().unum())
-        {
+        dlog.addLine(Logger::POSITIONING,kicker_pos - Vector2D(-0.2, 0), target_pos - Vector2D(-0.2, 0));
+        dlog.addLine(Logger::POSITIONING,kicker_pos - Vector2D(-0.1, 0), target_pos - Vector2D(-0.1, 0));
+        dlog.addLine(Logger::POSITIONING,kicker_pos, target_pos);
+        dlog.addLine(Logger::POSITIONING,kicker_pos - Vector2D(0.2, 0), target_pos - Vector2D(0.2, 0));
+        dlog.addLine(Logger::POSITIONING,kicker_pos - Vector2D(0.1, 0), target_pos - Vector2D(0.1, 0));
+        dlog.addCircle(Logger::POSITIONING, target_pos, 2);
 
-            int cycle_recive_ball = 0;
-            if (p.pass_sender == wm.interceptTable()->fastestTeammate()->unum())
-            {
-                cycle_recive_ball = wm.interceptTable()->teammateReachCycle();
-            }
-            else
-            {
-                cycle_recive_ball = wm.interceptTable()->teammateReachCycle() * 2.0;
-            }
-            res.push_back(unmark_passer(p.pass_sender, kicker_pos, wm.interceptTable()->opponentReachCycle(), cycle_recive_ball));
-            // res[res.size() - 1].is_fastest = true;
-        }
+        if (p.pass_getter == wm.self().unum())
+            res.push_back(unmark_passer(p.pass_sender, kicker_pos, wm.interceptTable()->opponentReachCycle()));
     }
-    if (res.size() > 0){
-        // std::cout << wm.interceptTable()->fastestTeammate()->unum() << " unum passs from " << res[0].unum << " " << res[0].ballpos << " -> " << " " << wm.self().unum()  << endl;
+    if (!res.empty()){
         return res[0].unum;
     }
     return 0;

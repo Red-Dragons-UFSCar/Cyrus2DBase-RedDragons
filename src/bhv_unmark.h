@@ -57,10 +57,8 @@ public:
         int unum = 0;
         Vector2D ballpos = Vector2D::INVALIDATED;;
         int oppmin_cycle = 0;
-        int cycle_recive_ball = 0;
-        bool is_fastest = false;
-        unmark_passer(int unum, Vector2D ballpos, int oppmin_cycle, int cycle_recive_ball)
-            : unum(unum), ballpos(ballpos), oppmin_cycle(oppmin_cycle), cycle_recive_ball(cycle_recive_ball)
+        unmark_passer(int unum, Vector2D ballpos, int oppmin_cycle)
+            : unum(unum), ballpos(ballpos), oppmin_cycle(oppmin_cycle)
         {
         }
         unmark_passer()
