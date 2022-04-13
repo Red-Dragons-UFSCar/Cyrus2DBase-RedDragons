@@ -290,8 +290,6 @@ void OffensiveDataExtractor::extract_players(DEState &state) {
                 ADD_ELEM("is_kicker", 0);
         }
         extract_pass_angle(player, state, side);
-        extract_goal_polar(player, side);
-        extract_goal_open_angle(player, state, side);
     }
 }
 
