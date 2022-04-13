@@ -36,8 +36,6 @@ private:
         ODEDataSide isKicker;
         ODEDataSide openAnglePass;
         ODEDataSide nearestOppDist;
-        ODEDataSide polarGoalCenter;
-        ODEDataSide openAngleGoal;
         ODEDataSide in_offside;
 
         bool use_convertor;
@@ -85,10 +83,6 @@ private:
     void extract_pos(DEPlayer *player, DEState &state, ODEDataSide side);
 
     void extract_pass_angle(DEPlayer *player, DEState &state, ODEDataSide side);
-
-    void extract_goal_polar(DEPlayer *player, ODEDataSide side);
-
-    void extract_goal_open_angle(DEPlayer *player, DEState &state, ODEDataSide side);
 
     void extract_base_data(DEPlayer *player, ODEDataSide side, DEState &state);
 

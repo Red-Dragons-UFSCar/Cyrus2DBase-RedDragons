@@ -35,7 +35,7 @@ OffensiveDataExtractor::~OffensiveDataExtractor() {
 
 
 OffensiveDataExtractor::Option::Option() {
-    cycle = true; //
+    cycle = false; //
     ball_pos = true;
     unum = BOTH;
     pos = BOTH;
@@ -44,10 +44,8 @@ OffensiveDataExtractor::Option::Option() {
     isKicker = TM;
     openAnglePass = TM;
     nearestOppDist = TM;
-    polarGoalCenter = TM;
-    openAngleGoal = TM;
     in_offside = TM;
-    use_convertor = false;
+    use_convertor = true;
 }
 
 
@@ -117,12 +115,6 @@ std::string OffensiveDataExtractor::get_header() {
             header += "p_l_" + std::to_string(i) + "_opp_dist,";
             header += "p_l_" + std::to_string(i) + "_opp_angle,";
         }
-        if (option.polarGoalCenter == TM || option.polarGoalCenter == BOTH) {
-            header += "p_l_" + std::to_string(i) + "_angle_goal_center_r,";
-            header += "p_l_" + std::to_string(i) + "_angle_goal_center_t,";
-        }
-        if (option.openAngleGoal == TM || option.openAngleGoal == BOTH)
-            header += "p_l_" + std::to_string(i) + "_open_goal_angle,";
     }
     for (int i = 1; i <= 11; i++) {
         if (option.unum == OPP || option.unum == BOTH)
@@ -151,12 +143,6 @@ std::string OffensiveDataExtractor::get_header() {
             header += "p_r_" + std::to_string(i) + "_opp_dist,";
             header += "p_r_" + std::to_string(i) + "_opp_angle,";
         }
-        if (option.polarGoalCenter == OPP || option.polarGoalCenter == BOTH) {
-            header += "p_r_" + std::to_string(i) + "_angle_coal_center_r,";
-            header += "p_r_" + std::to_string(i) + "_angle_goal_center_t,";
-        }
-        if (option.openAngleGoal == OPP || option.openAngleGoal == BOTH)
-            header += "p_r_" + std::to_string(i) + "_open_goal_Angle,";
     }
     header += "out_target_x,out_target_y,out_unum,";
     return header;
@@ -377,13 +363,6 @@ void OffensiveDataExtractor::add_null_player(int unum, ODEDataSide side) {
         ADD_ELEM("opp1_dist", invalid_data_);
         ADD_ELEM("opp1_angle", invalid_data_);
     }
-
-    if (option.polarGoalCenter == side || option.polarGoalCenter == BOTH) {
-        ADD_ELEM("angle_goal_center_r", invalid_data_);
-        ADD_ELEM("angle_goal_center_t", invalid_data_);
-    }
-    if (option.openAngleGoal == side || option.openAngleGoal == BOTH)
-        ADD_ELEM("open_goal_angle", invalid_data_);
 }
 
 void OffensiveDataExtractor::extract_output(DEState &state,
@@ -539,60 +518,6 @@ void OffensiveDataExtractor::extract_pos(DEPlayer *player, DEState &state, ODEDa
             ADD_ELEM("pos_offside", invalid_data_);
         }
     }
-}
-
-void OffensiveDataExtractor::extract_goal_polar(DEPlayer *player, ODEDataSide side) {
-    if (!(option.polarGoalCenter == side || option.polarGoalCenter == BOTH))
-        return;
-    if (!player->pos().isValid()){
-        ADD_ELEM("angle_goal_center_r", invalid_data_);
-        ADD_ELEM("angle_goal_center_t", invalid_data_);
-        return;
-    }
-    Vector2D goal_center = Vector2D(52, 0);
-    ADD_ELEM("angle_goal_center_r", convertor_dist((goal_center - player->pos()).r()));
-    ADD_ELEM("angle_goal_center_t", convertor_angle((goal_center - player->pos()).th().degree()));
-}
-
-void OffensiveDataExtractor::extract_goal_open_angle(DEPlayer *player,
-                                            DEState &state,
-                                            ODEDataSide side) {
-    if (!(option.openAngleGoal == side || option.openAngleGoal == BOTH))
-        return;
-    if (!player->pos().isValid()){
-        ADD_ELEM("goal_open_angle", invalid_data_);
-        return;
-    }
-    Vector2D goal_t = Vector2D(52, -7);
-    Vector2D goal_b = Vector2D(52, 7);
-    Triangle2D player_goal_area = Triangle2D(goal_b, goal_t, player->pos());
-
-    std::vector<Vector2D> players_in_area;
-
-    for (const auto& opp: state.theirPlayers()){
-        if (!opp->pos().isValid())
-            continue;
-        if (!player_goal_area.contains(opp->pos()))
-            continue;
-
-        players_in_area.push_back(opp->pos());
-    }
-    players_in_area.push_back(goal_t);
-    players_in_area.push_back(goal_b);
-
-    std::sort(players_in_area.begin(), players_in_area.end(),
-              [player](Vector2D p1, Vector2D p2) -> bool {
-                  return (p1 - player->pos()).th().degree() < (p2 - player->pos()).th().degree();
-              });
-
-    double max_open_angle = 0;
-    for (uint i = 1; i < players_in_area.size(); i++) {
-        double angle_diff = fabs((players_in_area[i] - player->pos()).th().degree()
-                                 - (players_in_area[i - 1] - player->pos()).th().degree());
-        if (angle_diff > max_open_angle)
-            max_open_angle = angle_diff;
-    }
-    ADD_ELEM("goal_open_angle", convertor_angle(max_open_angle));
 }
 
 void OffensiveDataExtractor::extract_base_data(DEPlayer *player, ODEDataSide side, DEState &state) {
