@@ -470,9 +470,7 @@ void Bhv_Unmark::load_dnn(){
     static bool load_dnn = false;
     if(!load_dnn){
         load_dnn = true; 
-        // std::cout << "dnn loading" << std::endl;
-        pass_prediction->ReadFromKeras("/home/nader/workspace/robo/Cyrus2DBase/scripts/training_unmark/best_model.txt");
-        // TODO: Other Teams
+        pass_prediction->ReadFromKeras("./unmark_dnn_weights.txt");
     }
 }
 
