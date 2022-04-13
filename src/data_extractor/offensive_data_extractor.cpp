@@ -21,7 +21,7 @@
 #define ADD_ELEM(key, value) features.push_back(value)
 
 double invalid_data_ = -2.0;
-bool OffensiveDataExtractor::active = true;
+bool OffensiveDataExtractor::active = false;
 
 using namespace rcsc;
 
