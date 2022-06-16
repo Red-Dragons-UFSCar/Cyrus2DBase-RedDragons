@@ -1,7 +1,8 @@
-# HELIOS Base
+# Cyrus2D Base 
 [![GitHub license](https://img.shields.io/github/license/helios-base/helios-base)](https://github.com/helios-base/helios-base/blob/master/LISENCE)
 
-helios-base is a sample team for the RoboCup Soccer 2D Simulator.
+Cyrus2D-base is a sample team for the RoboCup Soccer 2D Simulator.
+Cyrus2D base is a Helios base Fork.
 All programs can work with rcssserver-16.
 
 - The RoboCup Soccer Simulator: http://github.com/rcsoccersim/
@@ -9,9 +10,9 @@ All programs can work with rcssserver-16.
 
 ## Quick Start
 
-The latest helios-base depends on the following libraries:
+The latest Cyrus2D-base depends on the following libraries:
  - Boost 1.38 or later https://www.boost.org/
- - The latest librcsc https://github.com/helios-base/librcsc
+ - The latest helios librcsc https://github.com/helios-base/librcsc
 
 In the case of Ubuntu 16.04 or later, execute the following commands for installing a basic development environment:
 ```
@@ -27,7 +28,7 @@ To build binaries, execute commands from the root of source directory:
 make
 ```
 
-To start the agent2d team, invoke the start script in `src` directory.
+To start the cyrud2d team, invoke the start script in `src` directory.
 ```
 ./start.sh
 ```
@@ -47,6 +48,10 @@ See `./configure --help` for others options.
 
 ## References
 
+The paper about Cyrus2D Base:
+-- coming soon
+
+
 The paper about HELIOS Base:
 - Hidehisa Akiyama, Tomoharu Nakashima, HELIOS Base: An Open Source
 Package for the RoboCup Soccer 2D Simulation, In Sven Behnke, Manuela
@@ -55,6 +60,9 @@ World XVII, Lecture Notes in Artificial Intelligence, Springer Verlag,
 Berlin, 2014. http://dx.doi.org/10.1007/978-3-662-44468-9_46
 
 Related works:
+- going to be compeleted soon.
+
+- Hidehisa Akiyama, Tomoharu Nakashima, HELIOS Base: An Open Source Package for the RoboCup Soccer 2D Simulation, In Sven Behnke, Manuela Veloso, Arnoud Visser, and Rong Xiong editors, RoboCup2013: Robot World XVII, Lecture Notes in Artificial Intelligence, Springer Verlag, Berlin, 2014. http://dx.doi.org/10.1007/978-3-662-44468-9_46
 - Hidehisa Akiyama, Daisuke Katagami, Katsumi Nitta, Team Formation Construction Using a GUI Tool in the RoboCup Soccer Simulation, SCIS & ISIS, 2006, Volume 2006, SCIS & ISIS 2006, Session ID TH-D2-5, Pages 80-85, Released September 12, 2008, https://doi.org/10.14864/softscis.2006.0.80.0
 - Hidehisa Akiyama, Daisuke Katagami, Katsumi Nitta, Training of Agent Positioning using Human's Instruction, Journal of Advanced Computational Intelligence and Intelligent Informatics, Vol. 11 No.8, pp.998--1006, 2007-10-20. https://doi.org/10.20965/jaciii.2007.p0998
 - 秋山 英久, 野田 五十樹, エージェント配置問題における三角形分割を利用した近似モデル, 人工知能学会論文誌, 2008, 23 巻, 4 号, p. 255-267, 公開日 2008/04/24, Online ISSN 1346-8030, Print ISSN 1346-0714, https://doi.org/10.1527/tjsai.23.255
