@@ -2,7 +2,12 @@
 [![GitHub license](https://img.shields.io/github/license/helios-base/helios-base)](https://github.com/helios-base/helios-base/blob/master/LISENCE)
 
 Cyrus2D-base is a sample team for the RoboCup Soccer 2D Simulator.
-Cyrus2D base is a Helios base Fork.
+This base is a Helios base Fork.
+We merged the newest version of Helios base(Agent2D) with the Gliders2D base V2.6 together,
+After that we applied several features of Cyrus2021, the champion of RoboCup 2021 in Soccer Simulation 2D league to improve the performance and capabilities of this base.
+
+![The evolution of Helios2D, Glider2D and Cyrus2D base codes](https://github.com/Cyrus2D/Cyrus2DBase/blob/cyrus2d/cyrus-base.png)
+
 All programs can work with rcssserver-16.
 
 - The RoboCup Soccer Simulator: http://github.com/rcsoccersim/
