@@ -64,6 +64,10 @@ Veloso, Arnoud Visser, and Rong Xiong editors, RoboCup2013: Robot
 World XVII, Lecture Notes in Artificial Intelligence, Springer Verlag,
 Berlin, 2014. http://dx.doi.org/10.1007/978-3-662-44468-9_46
 
+The paper about Gliders2D Base:
+- M. Prokopenko, P. Wang, Fractals2019: Combinatorial Optimisation with Dynamic Constraint Annealing, RoboCup 2019: Robot World Cup XXIII, 616-630 (Champion paper), Springer-Verlag, 2019;  also: arXiv:1909.01788, 2019.
+- M. Prokopenko, P. Wang,  Gliders2d: Source Code Base for RoboCup 2D Soccer Simulation League, RoboCup 2019: Robot World Cup XXIII, 418-428, Springer-Verlag, 2019;  also:  arXiv:1812.10202, 2018.
+
 Related works:
 - going to be compeleted soon.
 
