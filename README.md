@@ -54,8 +54,9 @@ See `./configure --help` for others options.
 ## References
 
 The paper about Cyrus2D Base:
--- coming soon
-
+- https://arxiv.org/abs/2211.08585
+- Zare N, Sarvmaili M, Sayareh A, Amini O, Matwin S, Soares A. Engineering Features to Improve Pass Prediction in Soccer Simulation 2D Games. InRobot World Cup 2022 (pp. 140-152). Springer, Cham.
+- Zare N, Amini O, Sayareh A, Sarvmaili M, Firouzkouhi A, Matwin S, Soares A. Improving Dribbling, Passing, and Marking Actions in Soccer Simulation 2D Games Using Machine Learning. InRobot World Cup 2021 Jun 22 (pp. 340-351). Springer, Cham.
 
 The paper about HELIOS Base:
 - Hidehisa Akiyama, Tomoharu Nakashima, HELIOS Base: An Open Source
