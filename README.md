@@ -24,32 +24,42 @@ In the case of Ubuntu 16.04 or later, execute the following commands for install
 sudo apt update
 sudo apt install build-essential libboost-all-dev
 ```
-And, install librcsc.
-
+And, install librcsc:
+```
+git clone https://github.com/helios-base/librcsc.git
+cd librcsc
+mkdir build
+cd build
+cmake ..
+make
+make install
+```
+After that, install Eigen3: https://eigen.tuxfamily.org/dox/index.html
+```
+sudo apt install libeigen3-dev
+```
+Then, install CppDNN:
+```
+git clone git@github.com:Cyrus2D/CppDNN.git
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
+```
 To build binaries, execute commands from the root of source directory:
 ```
-./bootstrap
-./configure
+mkdir build
+cd build
+cmake ..
 make
 ```
 
 To start the cyrud2d team, invoke the start script in `src` directory.
 ```
+cd build/src/
 ./start.sh
 ```
-
-## Configuring
-
-You may need to configure the build settings if you installed librcsc to an unusual location. 
-You can specify the installed location of librcsc by using `--with-librcsc` option as follows:
-```
-./configure --with-librcsc=/path/to/librcsc
-```
-Usually, this value is the same as `--prefix` option of configuring librcsc.
-You may also need to set the environment variable `LD_LIBRARY_PATH`.
-
-See `./configure --help` for others options.
-
 
 ## References
 
