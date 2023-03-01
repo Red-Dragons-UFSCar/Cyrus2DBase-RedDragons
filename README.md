@@ -24,9 +24,10 @@ In the case of Ubuntu 16.04 or later, execute the following commands for install
 sudo apt update
 sudo apt install build-essential libboost-all-dev
 ```
-And, install librcsc:
+And, install librcsc (compatible with [librcsc-master-4c45970](https://github.com/helios-base/librcsc/tree/4c459706f782718a48c669ddcfcaecffcf50e034)):
 ```
 git clone https://github.com/helios-base/librcsc.git
+git checkout 4c459706f782718a48c669ddcfcaecffcf50e034
 cd librcsc
 mkdir build
 cd build
