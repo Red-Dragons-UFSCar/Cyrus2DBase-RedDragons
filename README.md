@@ -41,7 +41,8 @@ sudo apt install libeigen3-dev
 ```
 Then, install CppDNN:
 ```
-git clone git@github.com:Cyrus2D/CppDNN.git
+git clone https://github.com/Cyrus2D/CppDNN.git
+cd CppDNN
 mkdir build
 cd build
 cmake ..
