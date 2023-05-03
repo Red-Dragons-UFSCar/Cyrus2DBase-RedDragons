@@ -37,7 +37,7 @@ jobs:
     - name: Install CppDnn
       run: |
         git clone https://github.com/Cyrus2D/CppDNN.git
-        cd CppDnn
+        cd CppDNN
         mkdir build
         cd build
         cmake ..
