@@ -28,7 +28,7 @@ jobs:
       run: |
         git clone https://github.com/helios-base/librcsc.git
         cd librcsc
-        git checkout 4c459706f782718a48c669ddcfcaecffcf50e034
+        git checkout 19175f339dcb5c3f61b56a8c1bff5345109f22ef
         mkdir build
         cd build
         cmake ..
