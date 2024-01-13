@@ -8,7 +8,7 @@ After that we applied several features of Cyrus2021, the champion of RoboCup 202
 
 ![The evolution of Helios2D, Glider2D and Cyrus2D base codes](https://github.com/Cyrus2D/Cyrus2DBase/blob/cyrus2d/cyrus-base.png)
 
-All programs can work with rcssserver-16.
+All programs can work with rcssserver-18.
 
 - The RoboCup Soccer Simulator: http://github.com/rcsoccersim/
 - RoboCup Official Homepage: http://www.robocup.org/
