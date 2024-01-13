@@ -22,12 +22,12 @@ The latest Cyrus2D-base depends on the following libraries:
 In the case of Ubuntu 16.04 or later, execute the following commands for installing a basic development environment:
 ```
 sudo apt update
-sudo apt install build-essential libboost-all-dev
+sudo apt install build-essential libboost-all-dev cmake
 ```
-And, install librcsc (compatible with [librcsc-master-4c45970](https://github.com/helios-base/librcsc/tree/4c459706f782718a48c669ddcfcaecffcf50e034)):
+And, install librcsc (compatible with [librcsc-master-4c45970](https://github.com/helios-base/librcsc/tree/19175f339dcb5c3f61b56a8c1bff5345109f22ef)):
 ```
 git clone https://github.com/helios-base/librcsc.git
-git checkout 4c459706f782718a48c669ddcfcaecffcf50e034
+git checkout 19175f339dcb5c3f61b56a8c1bff5345109f22ef
 cd librcsc
 mkdir build
 cd build
@@ -57,11 +57,18 @@ cmake ..
 make
 ```
 
-To start the cyrud2d team, invoke the start script in `src` directory.
+To start the cyrud2d team, invoke the start script in `bin` directory.
 ```
-cd build/src/
+cd build/bin
 ./start.sh
 ```
+
+## Change Logo
+- Create a logo with the size of 256x64 pixels and save it as a png file. width: 256px, height: 64px
+- Decrease number of colors to 20 (https://onlinepngtools.com/decrease-png-color-count)
+- Convert the png file to xpm (https://www.onlineconvert.com/png-to-xpm)
+- Open the xpm file and change the name of char * variable to "team_logo_xpm". The second line should be "static const char *team_logo_xpm[] = {"
+- Copy content of the file and paste it in src/team_logo_xpm
 
 ## References
 
